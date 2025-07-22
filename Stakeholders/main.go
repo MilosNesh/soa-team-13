@@ -21,7 +21,7 @@ func initDB() *gorm.DB {
 		return nil
 	}
 
-	database.AutoMigrate(&model.Account{})
+	database.AutoMigrate(&model.Account{}, &model.Profile{})
 	database.Exec("INSERT INTO accounts VALUES ('mika', 'mika123', 'mika@gmail.com', 'admin')")
 	database.Exec("INSERT INTO accounts VALUES ('zika', 'zika123', 'zika@gmail.com', 'admin')")
 	return database
@@ -32,6 +32,9 @@ func startServer(handler *handler.StakeholdersHandler) {
 
 	router.HandleFunc("/accounts/", handler.AccountHandler.GetAll).Methods("GET")
 	router.HandleFunc("/accounts/", handler.AccountHandler.Create).Methods("POST")
+
+	router.HandleFunc("/profiles/{username}", handler.ProfileHandler.FindByUsername).Methods("GET")
+	router.HandleFunc("/profiles/{username}", handler.ProfileHandler.UpdateProfile).Methods("PUT")
 
 	println("Server started...")
 	log.Fatal(http.ListenAndServe(":8080", router))
@@ -47,7 +50,20 @@ func main() {
 
 	accountRepo := &repo.AccountRepository{DatabaseConnection: database}
 	accountService := &service.AccountService{AccountRepo: accountRepo}
-	handler := &handler.StakeholdersHandler{AccountHandler: handler.AccountHandler{AccountService: accountService}}
+	accountHandler := handler.AccountHandler{AccountService: accountService}
+
+	// handler := &handler.StakeholdersHandler{AccountHandler: handler.AccountHandler{AccountService: accountService}}
+
+	profileRepo := &repo.ProfileRepository{DatabaseConnection: database}
+	profileService := &service.ProfileService{ProfileRepo: profileRepo}
+	profileHandler := handler.ProfileHandler{ProfileService: profileService}
+
+	// profileHandler := &handler.StakeholdersHandler{ProfileHandler: handler.ProfileHandler {profileService: profileService}}
+
+	handler := &handler.StakeholdersHandler{
+		AccountHandler: accountHandler,
+		ProfileHandler: profileHandler,
+	}
 
 	startServer(handler)
 }
