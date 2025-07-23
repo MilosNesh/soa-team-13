@@ -1,7 +1,7 @@
 package model
 
 type Profile struct {
-	Username       string `json:"username" gorm:"primaryKey;not null"`
+	AccountId      string `gorm:"type:uuid;primaryKey"` //primary i foreign key
 	Name           string `json:"name"`
 	Surname        string `json:"surname"`
 	ProfilePicture string `json:"profile_picture"`

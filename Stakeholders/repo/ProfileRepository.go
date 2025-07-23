@@ -9,9 +9,9 @@ type ProfileRepository struct {
 	DatabaseConnection *gorm.DB
 }
 
-func (repo *ProfileRepository) FindByUsername(username string) (*model.Profile, error) {
+func (repo *ProfileRepository) FindByAccountId(accountId string) (*model.Profile, error) {
 	var profile model.Profile
-	result := repo.DatabaseConnection.First(&profile, "username = ?", username)
+	result := repo.DatabaseConnection.First(&profile, "account_id = ?", accountId)
 	if result.Error != nil {
 		return nil, result.Error
 	}

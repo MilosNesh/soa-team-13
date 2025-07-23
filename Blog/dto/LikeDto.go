@@ -1,5 +1,5 @@
 package dto
 
 type LikeDto struct {
-	Username string `json:"username"`
+	AccountId string `json:"account_id"`
 }

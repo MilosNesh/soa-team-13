@@ -55,9 +55,9 @@ func (repo *BlogRepository) Create(ctx context.Context, blog *model.Blog) error 
 	return nil
 }
 
-func (repo *BlogRepository) AddLike(ctx context.Context, blogId primitive.ObjectID, username string) error {
+func (repo *BlogRepository) AddLike(ctx context.Context, blogId primitive.ObjectID, accountId string) error {
 	filter := bson.M{"_id": blogId}
-	update := bson.M{"$addToSet": bson.M{"likes": username}}
+	update := bson.M{"$addToSet": bson.M{"likes": accountId}}
 
 	result, err := repo.Collection.UpdateOne(ctx, filter, update)
 
@@ -71,9 +71,9 @@ func (repo *BlogRepository) AddLike(ctx context.Context, blogId primitive.Object
 	return nil
 }
 
-func (repo *BlogRepository) RemoveLike(ctx context.Context, blogId primitive.ObjectID, username string) error {
+func (repo *BlogRepository) RemoveLike(ctx context.Context, blogId primitive.ObjectID, accountId string) error {
 	filter := bson.M{"_id": blogId}
-	update := bson.M{"$pull": bson.M{"likes": username}}
+	update := bson.M{"$pull": bson.M{"likes": accountId}}
 
 	result, err := repo.Collection.UpdateOne(ctx, filter, update)
 
@@ -88,8 +88,8 @@ func (repo *BlogRepository) RemoveLike(ctx context.Context, blogId primitive.Obj
 	return nil
 }
 
-func (repo *BlogRepository) HasLiked(ctx context.Context, blogId primitive.ObjectID, username string) (bool, error) {
-	filter := bson.M{"_id": blogId, "likes": username}
+func (repo *BlogRepository) HasLiked(ctx context.Context, blogId primitive.ObjectID, accountId string) (bool, error) {
+	filter := bson.M{"_id": blogId, "likes": accountId}
 
 	count, err := repo.Collection.CountDocuments(ctx, filter)
 	return count > 0, err

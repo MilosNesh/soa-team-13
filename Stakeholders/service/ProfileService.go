@@ -1,6 +1,9 @@
 package service
 
 import (
+	"errors"
+
+	"gorm.io/gorm"
 	"stakeholders.com/dto"
 	"stakeholders.com/model"
 	"stakeholders.com/repo"
@@ -10,8 +13,8 @@ type ProfileService struct {
 	ProfileRepo *repo.ProfileRepository
 }
 
-func (service *ProfileService) FindByUsername(username string) (*model.Profile, error) {
-	profile, err := service.ProfileRepo.FindByUsername(username)
+func (service *ProfileService) FindByAccountId(accountId string) (*model.Profile, error) {
+	profile, err := service.ProfileRepo.FindByAccountId(accountId)
 
 	if err != nil {
 		return nil, err
@@ -21,10 +24,17 @@ func (service *ProfileService) FindByUsername(username string) (*model.Profile, 
 
 }
 
-func (service *ProfileService) UpdateProfile(username string, profileDto dto.ProfileDto) (*model.Profile, error) {
-	profile, err := service.FindByUsername(username)
+func (service *ProfileService) UpdateProfile(profileDto dto.ProfileDto) (*model.Profile, error) {
+	var profile *model.Profile
+	var err error
 
-	if err != nil {
+	profile, err = service.FindByAccountId(profileDto.AccountId)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		profile = &model.Profile{
+			AccountId: profileDto.AccountId,
+		}
+	} else if err != nil {
 		return nil, err
 	}
 

@@ -81,12 +81,12 @@ func (handler *BlogHandler) HandleLike(writer http.ResponseWriter, req *http.Req
 
 	var request dto.LikeDto
 	err = json.NewDecoder(req.Body).Decode(&request)
-	if err != nil || request.Username == "" {
+	if err != nil || request.AccountId == "" {
 		http.Error(writer, "Invalid request body or missing username", http.StatusBadRequest)
 		return
 	}
 
-	liked, err := handler.BlogService.HandleLike(req.Context(), blogId, request.Username)
+	liked, err := handler.BlogService.HandleLike(req.Context(), blogId, request.AccountId)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return

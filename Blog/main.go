@@ -99,9 +99,13 @@ func main() {
 
 	blogsCollection := mongoClient.Database("blogdb").Collection("blogs")
 
+	stakeholderService := &service.StakeholderService{
+		BaseURL: "http://localhost:8080/",
+		Client:  &http.Client{},
+	}
 	blogRepo := &repo.BlogRepository{Collection: blogsCollection}
 
-	blogService := &service.BlogService{BlogRepo: blogRepo}
+	blogService := &service.BlogService{BlogRepo: blogRepo, StakeholderService: stakeholderService}
 
 	blogHandler := &handler.BlogHandler{BlogService: blogService}
 

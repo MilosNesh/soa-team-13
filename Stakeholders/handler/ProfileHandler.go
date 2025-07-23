@@ -13,11 +13,11 @@ type ProfileHandler struct {
 	ProfileService *service.ProfileService
 }
 
-func (handler *ProfileHandler) FindByUsername(writer http.ResponseWriter, req *http.Request) {
+func (handler *ProfileHandler) FindByAccountId(writer http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	username := vars["username"]
+	accountId := vars["accountId"]
 
-	profile, err := handler.ProfileService.FindByUsername(username)
+	profile, err := handler.ProfileService.FindByAccountId(accountId)
 
 	if err != nil {
 		writer.WriteHeader(http.StatusNotFound)
@@ -29,9 +29,6 @@ func (handler *ProfileHandler) FindByUsername(writer http.ResponseWriter, req *h
 }
 
 func (handler *ProfileHandler) UpdateProfile(writer http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	username := vars["username"]
-
 	var profileDto dto.ProfileDto
 	err := json.NewDecoder(req.Body).Decode(&profileDto)
 	if err != nil {
@@ -39,7 +36,7 @@ func (handler *ProfileHandler) UpdateProfile(writer http.ResponseWriter, req *ht
 		return
 	}
 
-	updatedProfile, errr := handler.ProfileService.UpdateProfile(username, profileDto)
+	updatedProfile, errr := handler.ProfileService.UpdateProfile(profileDto)
 
 	if errr != nil {
 		writer.WriteHeader(http.StatusInternalServerError)

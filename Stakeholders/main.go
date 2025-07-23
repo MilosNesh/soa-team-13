@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -22,8 +23,13 @@ func initDB() *gorm.DB {
 	}
 
 	database.AutoMigrate(&model.Account{}, &model.Profile{})
-	database.Exec("INSERT INTO accounts VALUES ('mika', 'mika123', 'mika@gmail.com', 'admin')")
-	database.Exec("INSERT INTO accounts VALUES ('zika', 'zika123', 'zika@gmail.com', 'admin')")
+
+	newID := uuid.New()
+	newID2 := uuid.New()
+
+	database.Exec("INSERT INTO accounts (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)", newID, "mika", "mika123", "mika@gmail.com", "admin")
+	database.Exec("INSERT INTO accounts (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)", newID2, "zika", "zika123", "zika@gmail.com", "admin")
+
 	return database
 }
 
@@ -32,9 +38,10 @@ func startServer(handler *handler.StakeholdersHandler) {
 
 	router.HandleFunc("/accounts/", handler.AccountHandler.GetAll).Methods("GET")
 	router.HandleFunc("/accounts/", handler.AccountHandler.Create).Methods("POST")
+	router.HandleFunc("/accounts/doesExists/{accountId}", handler.AccountHandler.FindAccount).Methods("GET")
 
-	router.HandleFunc("/profiles/{username}", handler.ProfileHandler.FindByUsername).Methods("GET")
-	router.HandleFunc("/profiles/{username}", handler.ProfileHandler.UpdateProfile).Methods("PUT")
+	router.HandleFunc("/profiles/{accountId}", handler.ProfileHandler.FindByAccountId).Methods("GET")
+	router.HandleFunc("/profiles/", handler.ProfileHandler.UpdateProfile).Methods("PUT")
 
 	println("Server started...")
 	log.Fatal(http.ListenAndServe(":8080", router))

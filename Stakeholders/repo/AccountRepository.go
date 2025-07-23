@@ -28,3 +28,12 @@ func (repo *AccountRepository) Create(account *model.Account) error {
 	println("Rows affected: ", dbResult.RowsAffected)
 	return nil
 }
+
+func (repo *AccountRepository) FindAccount(accountId string) error {
+	var account model.Account
+	dbResult := repo.DatabaseConnection.First(&account, "id = ?", accountId)
+	if dbResult.Error != nil {
+		return dbResult.Error
+	}
+	return nil
+}
