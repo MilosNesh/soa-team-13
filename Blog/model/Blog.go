@@ -12,4 +12,5 @@ type Blog struct {
 	Content   string             `bson:"content" json:"content"`
 	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
 	ImageUrl  string             `bson:"image_url,omitempty" json:"image_url,omitempty"`
+	Likes     []string           `bson:"likes,omitempty" json:"likes,omitempty"`
 }

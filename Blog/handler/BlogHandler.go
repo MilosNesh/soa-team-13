@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"blog_project/dto"
 	"blog_project/model"
 	"blog_project/service"
 	"context"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -65,4 +67,34 @@ func (handler *BlogHandler) Create(writer http.ResponseWriter, req *http.Request
 	writer.WriteHeader(http.StatusCreated)
 	writer.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(writer).Encode(blog)
+}
+
+func (handler *BlogHandler) HandleLike(writer http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	blogIdStr := vars["blogId"]
+
+	blogId, err := primitive.ObjectIDFromHex(blogIdStr)
+	if err != nil {
+		http.Error(writer, "Invalid blog ID", http.StatusBadRequest)
+		return
+	}
+
+	var request dto.LikeDto
+	err = json.NewDecoder(req.Body).Decode(&request)
+	if err != nil || request.AccountId == "" {
+		http.Error(writer, "Invalid request body or missing username", http.StatusBadRequest)
+		return
+	}
+
+	liked, err := handler.BlogService.HandleLike(req.Context(), blogId, request.AccountId)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writer.WriteHeader(http.StatusOK)
+	if liked {
+		writer.Write([]byte("like added"))
+	} else {
+		writer.Write([]byte("like removed"))
+	}
 }

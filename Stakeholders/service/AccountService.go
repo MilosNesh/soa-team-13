@@ -1,6 +1,9 @@
 package service
 
 import (
+	"errors"
+
+	"gorm.io/gorm"
 	"stakeholders.com/model"
 	"stakeholders.com/repo"
 )
@@ -25,4 +28,15 @@ func (service *AccountService) Create(account *model.Account) error {
 		return err
 	}
 	return nil
+}
+
+func (service *AccountService) FindAccount(accountId string) (bool, error) {
+	err := service.AccountRepo.FindAccount(accountId)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }

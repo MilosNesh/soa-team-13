@@ -81,9 +81,10 @@ func startServer(handler *handler.BlogHandler) {
 
 	router.HandleFunc("/blogs/{id}", handler.Get).Methods("GET")
 	router.HandleFunc("/blogs/", handler.Create).Methods("POST")
+	router.HandleFunc("/blogs/{blogId}/like", handler.HandleLike).Methods("POST")
 
-	log.Println("Server started on port :8080...")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Println("Server started on port :8081...")
+	log.Fatal(http.ListenAndServe(":8081", router)) // stakeholders slusa na 8080
 }
 
 func main() {
@@ -98,9 +99,13 @@ func main() {
 
 	blogsCollection := mongoClient.Database("blogdb").Collection("blogs")
 
+	stakeholderService := &service.StakeholderService{
+		BaseURL: "http://localhost:8080/",
+		Client:  &http.Client{},
+	}
 	blogRepo := &repo.BlogRepository{Collection: blogsCollection}
 
-	blogService := &service.BlogService{BlogRepo: blogRepo}
+	blogService := &service.BlogService{BlogRepo: blogRepo, StakeholderService: stakeholderService}
 
 	blogHandler := &handler.BlogHandler{BlogService: blogService}
 
