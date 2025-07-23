@@ -5,6 +5,7 @@ import (
 	"blog_project/repo"
 	"context"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -31,4 +32,20 @@ func (service *BlogService) Create(ctx context.Context, blog *model.Blog) error 
 		return err
 	}
 	return nil
+}
+
+func (service *BlogService) HandleLike(ctx context.Context, blogId primitive.ObjectID, username string) (bool, error) {
+
+	liked, err := service.BlogRepo.HasLiked(ctx, blogId, username)
+	if err != nil {
+		return false, err
+	}
+
+	if liked {
+		err = service.BlogRepo.RemoveLike(ctx, blogId, username)
+		return false, err
+	} else {
+		err = service.BlogRepo.AddLike(ctx, blogId, username)
+		return true, err
+	}
 }

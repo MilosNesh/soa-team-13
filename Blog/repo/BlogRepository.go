@@ -3,6 +3,7 @@ package repo
 import (
 	"blog_project/model"
 	"context"
+	"errors"
 	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -52,4 +53,44 @@ func (repo *BlogRepository) Create(ctx context.Context, blog *model.Blog) error 
 	}
 
 	return nil
+}
+
+func (repo *BlogRepository) AddLike(ctx context.Context, blogId primitive.ObjectID, username string) error {
+	filter := bson.M{"_id": blogId}
+	update := bson.M{"$addToSet": bson.M{"likes": username}}
+
+	result, err := repo.Collection.UpdateOne(ctx, filter, update)
+
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return errors.New("blog not found add")
+	}
+	return nil
+}
+
+func (repo *BlogRepository) RemoveLike(ctx context.Context, blogId primitive.ObjectID, username string) error {
+	filter := bson.M{"_id": blogId}
+	update := bson.M{"$pull": bson.M{"likes": username}}
+
+	result, err := repo.Collection.UpdateOne(ctx, filter, update)
+
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return errors.New("blog not found")
+	}
+
+	return nil
+}
+
+func (repo *BlogRepository) HasLiked(ctx context.Context, blogId primitive.ObjectID, username string) (bool, error) {
+	filter := bson.M{"_id": blogId, "likes": username}
+
+	count, err := repo.Collection.CountDocuments(ctx, filter)
+	return count > 0, err
 }
