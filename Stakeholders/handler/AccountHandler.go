@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"stakeholders.com/model"
 	"stakeholders.com/service"
 )
@@ -34,6 +36,8 @@ func (handler *AccountHandler) Create(writer http.ResponseWriter, req *http.Requ
 		return
 	}
 
+	account.Id = uuid.New().String()
+
 	if !account.IsValid() {
 		println("Account is not valid")
 		writer.WriteHeader(http.StatusBadRequest)
@@ -56,4 +60,22 @@ func (handler *AccountHandler) Create(writer http.ResponseWriter, req *http.Requ
 
 	writer.WriteHeader(http.StatusCreated)
 	writer.Header().Set("Content-Type", "application/json")
+}
+
+func (handler *AccountHandler) FindAccount(writer http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	accountId := vars["accountId"]
+
+	exists, err := handler.AccountService.FindAccount(accountId)
+
+	if err != nil {
+		http.Error(writer, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	if !exists {
+		http.Error(writer, "Account not found", http.StatusNotFound)
+		return
+	}
+	writer.WriteHeader(http.StatusOK)
+	writer.Write([]byte("Account exists"))
 }
