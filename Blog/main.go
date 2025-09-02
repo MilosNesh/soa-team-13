@@ -21,7 +21,7 @@ func initDB() *mongo.Client {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel() // Uvek pozovi cancel() da oslobodiš resurse
 
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	clientOptions := options.Client().ApplyURI("mongodb://mongo_db:27017")
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
@@ -100,7 +100,7 @@ func main() {
 	blogsCollection := mongoClient.Database("blogdb").Collection("blogs")
 
 	stakeholderService := &service.StakeholderService{
-		BaseURL: "http://localhost:8080/",
+		BaseURL: "http://stakeholders:8080/",
 		Client:  &http.Client{},
 	}
 	blogRepo := &repo.BlogRepository{Collection: blogsCollection}

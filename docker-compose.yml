@@ -1,0 +1,64 @@
+version: "3.7"
+
+services:
+  stakeholders:
+    build:
+      context: ./stakeholders
+      dockerfile: Dockerfile
+    image: stakeholders
+    container_name: stakeholders_service
+    restart: always
+    networks:
+      - servers
+    ports:
+      - 8080:8080
+    depends_on:
+      - database
+
+  database:
+    image: postgres
+    container_name: stakeholders_postgres
+    restart: always
+    networks:
+      - servers
+    ports:
+      - 5000:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: super
+      POSTGRES_DB: stakeholders
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  blog:
+    build:
+      context: ./blog
+      dockerfile: Dockerfile
+    image: blog
+    container_name: blog_service
+    restart: always
+    networks:
+      - servers
+    ports:
+      - 8081:8081
+    depends_on:
+      - mongo_db
+
+  mongo_db:
+    image: mongo
+    container_name: blog_mongo
+    restart: always
+    networks:
+      - servers
+    ports:
+      - 27018:27017
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  postgres-data:
+  mongo-data:
+
+networks:
+  servers:
+    driver: bridge
