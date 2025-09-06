@@ -1,7 +1,13 @@
 package repo
 
 import (
+	"fmt"
+	"time"
+
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"stakeholders.com/dto"
 	"stakeholders.com/model"
 )
 
@@ -11,7 +17,7 @@ type AccountRepository struct {
 
 func (repo *AccountRepository) FindAll() ([]model.Account, error) {
 	var accounts []model.Account
-	dbResult := repo.DatabaseConnection.Select("username", "email", "role").Find(&accounts)
+	dbResult := repo.DatabaseConnection.Select("id", "username", "email", "role").Find(&accounts)
 
 	if dbResult.Error != nil {
 		return nil, dbResult.Error
@@ -20,12 +26,16 @@ func (repo *AccountRepository) FindAll() ([]model.Account, error) {
 }
 
 func (repo *AccountRepository) Create(account *model.Account) error {
+	if account.Id == "" {
+		account.Id = uuid.New().String()
+	}
 	dbResult := repo.DatabaseConnection.Create(account)
 
 	if dbResult.Error != nil {
 		return dbResult.Error
 	}
-	println("Rows affected: ", dbResult.RowsAffected)
+	fmt.Println("Rows affected: ", dbResult.RowsAffected)
+	fmt.Printf("Created account: %+v\n", account)
 	return nil
 }
 
@@ -36,4 +46,44 @@ func (repo *AccountRepository) FindAccount(accountId string) error {
 		return dbResult.Error
 	}
 	return nil
+}
+
+func (repo *AccountRepository) Login(loginDetails *dto.LoginDetailsDto) (string, error) {
+	var account model.Account
+	dbResult := repo.DatabaseConnection.First(&account, "email = ?", loginDetails.Email)
+	if dbResult.Error != nil {
+		return "Nema", dbResult.Error
+	}
+	if account.Password != loginDetails.Password {
+		return "Lozinka", nil
+	}
+	token, err := CreateToken(&account)
+
+	if err != nil {
+		return "Token", err
+	}
+	return token, nil
+}
+
+func CreateToken(account *model.Account) (string, error) {
+	secretKey := []byte("sekret_key_12#4")
+
+	claims := &dto.Claims{
+		Role:     account.Role,
+		Username: account.Username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    "stakeholders.com",
+			Subject:   account.Id,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(secretKey)
+
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }

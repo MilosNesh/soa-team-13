@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"stakeholders.com/dto"
 	"stakeholders.com/model"
 	"stakeholders.com/service"
 )
@@ -78,4 +79,31 @@ func (handler *AccountHandler) FindAccount(writer http.ResponseWriter, req *http
 	}
 	writer.WriteHeader(http.StatusOK)
 	writer.Write([]byte("Account exists"))
+}
+
+func (handler *AccountHandler) Login(writer http.ResponseWriter, req *http.Request) {
+	var loginDetails dto.LoginDetailsDto
+	err := json.NewDecoder(req.Body).Decode(&loginDetails)
+
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	str := handler.AccountService.Login(&loginDetails)
+	if str == "Nema" {
+		http.Error(writer, "Account not found", http.StatusNotFound)
+		return
+	}
+	if str == "Lozinka" {
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if str == "Token" {
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	writer.WriteHeader(http.StatusOK)
+	json.NewEncoder(writer).Encode(map[string]string{"token": str})
 }

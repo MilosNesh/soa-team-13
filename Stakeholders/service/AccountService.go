@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"gorm.io/gorm"
+	"stakeholders.com/dto"
 	"stakeholders.com/model"
 	"stakeholders.com/repo"
 )
@@ -39,4 +40,10 @@ func (service *AccountService) FindAccount(accountId string) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+func (service *AccountService) Login(loginDetails *dto.LoginDetailsDto) string {
+	str, _ := service.AccountRepo.Login(loginDetails)
+
+	return str
 }
