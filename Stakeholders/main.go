@@ -39,6 +39,7 @@ func startServer(handler *handler.StakeholdersHandler) {
 	router.HandleFunc("/accounts/", handler.AccountHandler.GetAll).Methods("GET")
 	router.HandleFunc("/accounts/", handler.AccountHandler.Create).Methods("POST")
 	router.HandleFunc("/accounts/doesExists/{accountId}", handler.AccountHandler.FindAccount).Methods("GET")
+	router.HandleFunc("/accounts/login", handler.AccountHandler.Login).Methods("POST")
 
 	router.HandleFunc("/profiles/{accountId}", handler.ProfileHandler.FindByAccountId).Methods("GET")
 	router.HandleFunc("/profiles/", handler.ProfileHandler.UpdateProfile).Methods("PUT")
