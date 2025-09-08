@@ -66,6 +66,38 @@ services:
     volumes:
       - mongo-data:/data/db
 
+  followers:
+    build:
+      context: ./followers
+      dockerfile: Dockerfile
+    image: followers
+    container_name: followers_service
+    restart: always
+    networks:
+      - servers
+    ports:
+      - 8082:8082
+    depends_on:
+      - neo4j
+
+
+  neo4j:
+    image: neo4j:5.20
+    container_name: follower_neo4j
+    restart: always
+    networks:
+      - servers
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/password123
+    volumes:
+      - ./neo4j/data:/data
+      - ./neo4j/logs:/logs
+      - ./neo4j/plugins:/plugins
+
+
 volumes:
   postgres-data:
   mongo-data:
@@ -73,3 +105,6 @@ volumes:
 networks:
   servers:
     driver: bridge
+
+
+

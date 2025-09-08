@@ -12,6 +12,7 @@ func startServer(handler *handler.GatewayHandler) {
 	router := mux.NewRouter()
 	router.HandleFunc("/accounts/{anything:.*}", handler.HandleAccount).Methods("GET", "POST", "PUT", "DELETE")
 	router.HandleFunc("/blogs/{anything:.*}", handler.HandleBlog).Methods("GET", "POST", "PUT", "DELETE")
+	router.HandleFunc("/follow/{anything:.*}", handler.HandleFollow).Methods("GET", "POST", "PUT", "DELETE")
 	println("Gateway started...")
 	log.Fatal(http.ListenAndServe(":8070", router))
 }

@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -24,11 +23,8 @@ func initDB() *gorm.DB {
 
 	database.AutoMigrate(&model.Account{}, &model.Profile{})
 
-	newID := uuid.New()
-	newID2 := uuid.New()
-
-	database.Exec("INSERT INTO accounts (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)", newID, "mika", "mika123", "mika@gmail.com", "admin")
-	database.Exec("INSERT INTO accounts (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)", newID2, "zika", "zika123", "zika@gmail.com", "admin")
+	database.Exec("INSERT INTO accounts (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)", "7ac9fcb3-5785-4f57-ab5f-bb7f9adff513", "mika", "mika123", "mika@gmail.com", "admin")
+	database.Exec("INSERT INTO accounts (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)", "8a8dbf45-80ee-45cc-a3eb-971f657b7b1f", "zika", "zika123", "zika@gmail.com", "admin")
 
 	return database
 }

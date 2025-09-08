@@ -84,7 +84,6 @@ func parseToken(token string) (string, string, string) {
 	secretKey := []byte("sekret_key_12#4")
 
 	parsedToken, err := jwt.ParseWithClaims(token, &dto.Claims{}, func(token *jwt.Token) (interface{}, error) {
-		// Proveri da li je algoritam ispravan
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("nevalidan signing metod: %v", token.Header["alg"])
 		}
@@ -117,4 +116,33 @@ func getToken(req *http.Request) string {
 	}
 
 	return parts[1]
+}
+
+func (handler *GatewayHandler) HandleFollow(writer http.ResponseWriter, req *http.Request) {
+	var token = getToken(req)
+	path := strings.TrimPrefix(req.URL.Path, "/follow/")
+
+	if token == "" {
+		writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	// role, _, _ := parseToken(token) // ako treba rola za neku provjeru otkomentarisati, takodje username i id
+
+	//Prosljedjivanje zahtjeva
+	targetURL, err := url.Parse("http://followers_service:8082")
+	if err != nil {
+		http.Error(writer, "Invalid target URL", http.StatusInternalServerError)
+		return
+	}
+
+	proxy := httputil.NewSingleHostReverseProxy(targetURL)
+	originalDirector := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		originalDirector(req)
+		req.URL.Path = "/follow/" + path
+		req.Host = "followers_service:8082"
+	}
+
+	proxy.ServeHTTP(writer, req)
 }
