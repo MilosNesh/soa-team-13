@@ -6,6 +6,7 @@ type Account struct {
 	Password string `json:"password,omitempty"`
 	Email    string `json:"email" gorm:"uniqueIndex;not null"`
 	Role     string `json:"role"`
+	Blocked  bool   `json:"blocked" gorm:"not null;default:false;index"`
 
 	Profile Profile `gorm:"constraint:OnDelete:CASCADE"`
 }

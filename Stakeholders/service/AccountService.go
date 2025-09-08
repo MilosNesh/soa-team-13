@@ -47,3 +47,10 @@ func (service *AccountService) Login(loginDetails *dto.LoginDetailsDto) string {
 
 	return str
 }
+
+func (service *AccountService) BlockAccount(admin *model.Account, userId string) error {
+	if admin == nil || admin.Role != "admin" {
+		return errors.New("forbidden: admin only")
+	}
+	return service.AccountRepo.BlockAccount(userId)
+}

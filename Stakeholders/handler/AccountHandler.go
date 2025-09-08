@@ -107,3 +107,20 @@ func (handler *AccountHandler) Login(writer http.ResponseWriter, req *http.Reque
 	writer.WriteHeader(http.StatusOK)
 	json.NewEncoder(writer).Encode(map[string]string{"token": str})
 }
+
+func (handler *AccountHandler) Block(writer http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	accountId := vars["accountId"]
+
+	_, _, role, _ := ExtractUser(req)
+	admin := &model.Account{Role: role}
+
+	err := handler.AccountService.BlockAccount(admin, accountId)
+	if err != nil {
+		http.Error(writer, "Only admin can block account", http.StatusInternalServerError)
+		return
+	}
+
+	writer.WriteHeader(http.StatusOK)
+	writer.Write([]byte("Account blocked successfully"))
+}
