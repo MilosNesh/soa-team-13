@@ -87,3 +87,19 @@ func CreateToken(account *model.Account) (string, error) {
 	}
 	return tokenString, nil
 }
+
+func (repo *AccountRepository) GetUsernameById(accountId string) (string, error) {
+	var username string
+	dbResult := repo.DatabaseConnection.Table("accounts").
+		Select("username").
+		Where("id = ?", accountId).
+		Scan(&username)
+
+	if dbResult.Error != nil {
+		return "", dbResult.Error
+	}
+	if username == "" {
+		return "", nil
+	}
+	return username, nil
+}

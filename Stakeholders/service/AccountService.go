@@ -47,3 +47,7 @@ func (service *AccountService) Login(loginDetails *dto.LoginDetailsDto) string {
 
 	return str
 }
+
+func (s *AccountService) GetUsernameById(accountId string) (string, error) {
+	return s.AccountRepo.GetUsernameById(accountId)
+}
