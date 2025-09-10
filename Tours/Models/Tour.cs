@@ -29,12 +29,12 @@ public class Tour
     public List<KeyPoint> KeyPoints { get; set; } = new List<KeyPoint>();
     //public List<TourDuration> TourDurations { get; set; } = new List<TourDuration>();
     public double Length { get;  set; }
-    public int AuthorId { get;  set; }
+    public string AuthorId { get;  set; }
     public DateTime? PublishTime { get;  set; } = null;
     public DateTime? ArchiveTime { get;  set; } = null;
     public string Image { get;  set; }
 
-    public Tour(string name, TourDifficulty difficulty, string description, double cost, TourStatus status, string tags, double length, int authorId, string image)
+    public Tour(string name, TourDifficulty difficulty, string description, double cost, TourStatus status, string tags, double length, string authorId, string image)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Invalid Name.");
         Name = name;
