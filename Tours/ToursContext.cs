@@ -10,6 +10,7 @@ public class ToursContext : DbContext
     }
     public DbSet<Tour> Tours { get; set; }
     public DbSet<KeyPoint> KeyPoints { get; set; }
+    public DbSet<TourReview> TourReviews { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -17,6 +18,6 @@ public class ToursContext : DbContext
         modelBuilder.Entity<Tour>().
             HasMany(t => t.KeyPoints).
             WithOne();
-
+        modelBuilder.Entity<Tour>().HasMany(tr => tr.Reviews).WithOne().HasForeignKey(r => r.TourId);
     }
 }

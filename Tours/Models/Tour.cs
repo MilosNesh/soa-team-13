@@ -33,6 +33,7 @@ public class Tour
     public DateTime? PublishTime { get;  set; } = null;
     public DateTime? ArchiveTime { get;  set; } = null;
     public string Image { get;  set; }
+    public List<TourReview> Reviews { get; private set; }
 
     public Tour(string name, TourDifficulty difficulty, string description, double cost, TourStatus status, string tags, double length, string authorId, string image)
     {
@@ -46,6 +47,7 @@ public class Tour
         Length = length;
         AuthorId = authorId;
         Image = image;
+        Reviews = new List<TourReview>();
     }
 
     public Tour()

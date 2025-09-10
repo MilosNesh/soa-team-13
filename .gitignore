@@ -37,3 +37,7 @@ go.work.sum
 .vscode/
 bin/
 obj/
+
+neo4j/data/
+neo4j/logs/
+neo4j/plugins/
