@@ -30,3 +30,10 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+
+# Visual Studio
+.vs/
+.vscode/
+bin/
+obj/

@@ -66,8 +66,36 @@ services:
     volumes:
       - mongo-data:/data/db
 
+  tours:
+    build:
+      context: ./tours
+      dockerfile: Dockerfile
+    container_name: tours_service
+    ports:
+      - "8084:8084"  
+    depends_on:
+     - tour_database
+    networks:
+      - servers
+
+  tour_database:
+    image: postgres
+    container_name: tour_postgres
+    restart: always
+    networks:
+      - servers
+    ports:
+      - 5001:5432
+    environment:
+      POSTGRES_USER: postgres_tour
+      POSTGRES_PASSWORD: super_tour
+      POSTGRES_DB: toursdb
+    volumes:
+      - postgres-data-tours:/var/lib/postgresql/data
+      
 volumes:
   postgres-data:
+  postgres-data-tours:
   mongo-data:
 
 networks:
