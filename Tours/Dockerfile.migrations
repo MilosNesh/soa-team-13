@@ -1,0 +1,17 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+
+WORKDIR /src
+
+# Kopiraj csproj i restore zavisnosti
+COPY ["Tours.csproj", "./"]
+RUN dotnet restore "Tours.csproj"
+
+# Kopiraj sve ostale fajlove
+COPY . . 
+
+# Dodaj wait-for-it skriptu
+RUN apt-get update && apt-get install -y curl
+RUN curl -sSLO https://github.com/vishnubob/wait-for-it/releases/download/v2.4.3/wait-for-it.sh && chmod +x wait-for-it.sh
+
+# Pokreni migracije sa čekanjem da baza bude dostupna
+ENTRYPOINT ["./wait-for-it.sh", "tour-database:5432", "--", "dotnet", "ef", "database", "update"]
