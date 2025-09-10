@@ -12,6 +12,8 @@ builder.Services.AddScoped<ITourRepository, TourRepository>();
 builder.Services.AddScoped<ITourService, TourService>(); 
 builder.Services.AddControllers()
         .AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase);
+builder.Services.AddScoped<ITourReviewService, TourReviewService>();
+builder.Services.AddScoped<ITourReviewRepository, TourReviewRepository>();
 
 
 var app = builder.Build();
