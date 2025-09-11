@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"gateway.com/handler"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -14,13 +15,16 @@ func startServer(handler *handler.GatewayHandler) {
 	router.HandleFunc("/blogs/{anything:.*}", handler.HandleBlog).Methods("GET", "POST", "PUT", "DELETE")
 	router.HandleFunc("/tours/{anything:.*}", handler.HandleTour).Methods("GET", "POST", "PUT", "DELETE")
 
+	corsHandler := handlers.CORS(
+		handlers.AllowedOrigins([]string{"http://localhost:4200"}),
+		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+	)(router)
 	println("Gateway started...")
-	log.Fatal(http.ListenAndServe(":8070", router))
+	log.Fatal(http.ListenAndServe(":8070", corsHandler))
 }
 
 func main() {
-	// router := mux.NewRouter()
-	// router.HandleFunc("/", main()).Methods("GET")
 	handler := &handler.GatewayHandler{}
 	startServer(handler)
 }
