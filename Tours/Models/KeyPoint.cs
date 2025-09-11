@@ -9,6 +9,7 @@ public class KeyPoint
     public float Latitude { get; init; }
     public float Longitude { get; init; }
 
+    public KeyPoint() { }
     public KeyPoint(string name, string description, string image, float latitude, float longitude)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException("Invalid name");

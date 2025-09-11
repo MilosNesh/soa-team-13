@@ -14,7 +14,19 @@ builder.Services.AddControllers()
         .AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase);
 builder.Services.AddScoped<ITourReviewService, TourReviewService>();
 builder.Services.AddScoped<ITourReviewRepository, TourReviewRepository>();
+builder.Services.AddScoped<IKeyPointRepository, KeyPointRepository>();
+builder.Services.AddScoped<IKeyPointService, KeyPointService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevCors", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
 
@@ -25,6 +37,8 @@ var app = builder.Build();
 app.ApplyMigrations();
 
 app.UseAuthorization();
+
+app.UseCors("DevCors");
 
 app.MapControllers();
 
