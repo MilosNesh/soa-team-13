@@ -17,7 +17,7 @@ type AccountRepository struct {
 
 func (repo *AccountRepository) FindAll() ([]model.Account, error) {
 	var accounts []model.Account
-	dbResult := repo.DatabaseConnection.Select("id", "username", "email", "role").Find(&accounts)
+	dbResult := repo.DatabaseConnection.Select("id", "username", "email", "role", "blocked").Find(&accounts)
 
 	if dbResult.Error != nil {
 		return nil, dbResult.Error
@@ -86,6 +86,12 @@ func CreateToken(account *model.Account) (string, error) {
 		return "", err
 	}
 	return tokenString, nil
+}
+
+func (repo *AccountRepository) BlockAccount(accountId string) error {
+	return repo.DatabaseConnection.Model(&model.Account{}).
+		Where("id = ?", accountId).
+		Update("blocked", true).Error
 }
 
 func (repo *AccountRepository) GetUsernameById(accountId string) (string, error) {
