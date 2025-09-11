@@ -27,9 +27,28 @@ public class TourService: ITourService
         }
     }
 
+    public Result<Tour> Update(Tour tour)
+    {
+        try
+        {
+            var savedTour = _tourRepository.Update(tour);
+            return savedTour;
+        }
+        catch (Exception e)
+        {
+            return Result.Fail(new Error("Invalid data supplied.").WithMetadata("code", 400)).WithError(e.Message);
+        }
+    }
+
+
     public Result<List<Tour>> GetAll() 
     {
         return _tourRepository.GetAll();
+    }
+
+    public Result<Tour> GetById(int id)
+    {
+        return _tourRepository.GetById(id);
     }
 
 }

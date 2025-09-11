@@ -56,4 +56,13 @@ public class TourRepository : ITourRepository
         var list = _context.Tours.Include(t => t.KeyPoints).ToList();
         return list;
     }
+
+    public Tour GetById(int id)
+    {
+        return _context.Tours
+            .AsNoTracking()
+            .Include(t => t.KeyPoints)
+            .FirstOrDefault(t => t.Id == id);
+    }
+
 }

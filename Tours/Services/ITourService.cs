@@ -6,6 +6,7 @@ namespace Tours.Services;
 public interface ITourService
 {
     public Result<Tour> Create(Tour tour);
+    public Result<Tour> Update(Tour tour);
     public Result<List<Tour>> GetAll();
-
+    public Result<Tour> GetById(int id);
 }

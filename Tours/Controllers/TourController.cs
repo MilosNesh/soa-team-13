@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FluentResults;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Tours.Models;
 using Tours.Services;
@@ -34,5 +35,19 @@ public class TourController : ControllerBase
         }
 
         return BadRequest(result.Errors);
+    }
+
+    [HttpGet("{id:int}")]
+    public ActionResult<Tour> GetById(int id)
+    {
+        var result = _tourService.GetById(id);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+    }
+
+    [HttpPut("{id:int}")]
+    public ActionResult<Tour> Update([FromBody] Tour tour)
+    {
+        var result = _tourService.Update(tour);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
     }
 }

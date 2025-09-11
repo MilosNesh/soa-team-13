@@ -1,4 +1,5 @@
-﻿using Tours.Models;
+﻿using FluentResults;
+using Tours.Models;
 
 namespace Tours.Repositorues
 {
@@ -7,6 +8,6 @@ namespace Tours.Repositorues
         public KeyPoint Get(int id);
         public KeyPoint Create(KeyPoint keyPoint);
         public KeyPoint Update(KeyPoint keyPoint);
-
+        public Result Delete(int id);
     }
 }

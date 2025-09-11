@@ -29,5 +29,12 @@ namespace Tours.Controllers
             var result = _keyPointService.Get(id);
             return result.IsSuccess ? Ok(result.Value) : NotFound(result.Errors);
         }
+
+        [HttpDelete("{id:int}")]
+        public IActionResult Delete(int id)
+        {
+            var result = _keyPointService.Delete(id);
+            return result.IsSuccess ? Ok(result) : NotFound(result.Errors);
+        }
     }
 }
