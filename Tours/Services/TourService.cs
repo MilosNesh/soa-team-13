@@ -1,4 +1,4 @@
-﻿using Tours.Models;
+using Tours.Models;
 using Tours.Repositorues;
 using FluentResults;
 
@@ -44,6 +44,11 @@ public class TourService: ITourService
     public Result<List<Tour>> GetAll() 
     {
         return _tourRepository.GetAll();
+    }
+
+    public Result<List<Tour>> GetByAuthor(string authorId)
+    {
+        return _tourRepository.GetByAuthorId(authorId);
     }
 
     public Result<Tour> GetById(int id)

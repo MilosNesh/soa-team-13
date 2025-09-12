@@ -47,7 +47,7 @@ public class TourRepository : ITourRepository
 
     public List<Tour> GetByAuthorId(string id)
     {
-        var list = (List<Tour>) _context.Tours.Include(t => t.KeyPoints).Where(t => t.AuthorId == id);
+        var list = _context.Tours.Include(t => t.KeyPoints).Where(t => t.AuthorId == id).ToList();
         return list;
     }
 

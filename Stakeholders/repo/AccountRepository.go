@@ -2,6 +2,7 @@ package repo
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -92,4 +93,27 @@ func (repo *AccountRepository) BlockAccount(accountId string) error {
 	return repo.DatabaseConnection.Model(&model.Account{}).
 		Where("id = ?", accountId).
 		Update("blocked", true).Error
+}
+
+func (repo *AccountRepository) ParseToken(token string) *dto.Claims {
+	secretKey := []byte("sekret_key_12#4")
+
+	parsedToken, err := jwt.ParseWithClaims(token, &dto.Claims{}, func(token *jwt.Token) (interface{}, error) {
+		// Proveri da li je algoritam ispravan
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("nevalidan signing metod: %v", token.Header["alg"])
+		}
+		return secretKey, nil
+	})
+
+	if err != nil {
+		log.Fatalf("Greška pri parsiranju tokena: %v", err)
+		return nil
+	}
+
+	var customClaims *dto.Claims
+	if claims, ok := parsedToken.Claims.(*dto.Claims); ok && parsedToken.Valid {
+		customClaims = claims
+	}
+	return customClaims
 }
