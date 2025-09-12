@@ -24,6 +24,32 @@ func initDB() *gorm.DB {
 
 	database.AutoMigrate(&model.Account{}, &model.Profile{})
 
+	ddl := `
+	CREATE OR REPLACE FUNCTION create_profile_for_account() RETURNS trigger AS $$
+	BEGIN
+	IF lower(coalesce(NEW.role, '')) = 'admin' THEN
+		RETURN NEW;
+	END IF;
+
+	INSERT INTO profiles (account_id, name, surname, profile_picture, bio, motto)
+	VALUES (NEW.id, '', '', '', '', '')
+	ON CONFLICT (account_id) DO NOTHING;
+
+	RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+
+	DROP TRIGGER IF EXISTS trg_create_profile ON accounts;
+
+	CREATE TRIGGER trg_create_profile
+	AFTER INSERT ON accounts
+	FOR EACH ROW
+	EXECUTE FUNCTION create_profile_for_account();
+	`
+	if err := database.Exec(ddl).Error; err != nil {
+		panic(err)
+	}
+
 	newID := uuid.New()
 	newID2 := uuid.New()
 
@@ -43,8 +69,8 @@ func startServer(handler *handler.StakeholdersHandler) {
 	router.HandleFunc("/accounts/{accountId}/block", handler.AccountHandler.Block).Methods("POST")
 	router.HandleFunc("/accounts/parsetoken", handler.AccountHandler.ParseToken).Methods("GET")
 
-	router.HandleFunc("/profiles/{accountId}", handler.ProfileHandler.FindByAccountId).Methods("GET")
-	router.HandleFunc("/profiles/", handler.ProfileHandler.UpdateProfile).Methods("PUT")
+	router.HandleFunc("/accounts/profiles/{accountId}", handler.ProfileHandler.FindByAccountId).Methods("GET")
+	router.HandleFunc("/accounts/profiles/", handler.ProfileHandler.UpdateProfile).Methods("PUT")
 
 	println("Server started...")
 	log.Fatal(http.ListenAndServe(":8080", router))

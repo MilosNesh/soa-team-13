@@ -121,8 +121,16 @@ func (handler *AccountHandler) Block(writer http.ResponseWriter, req *http.Reque
 	vars := mux.Vars(req)
 	accountId := vars["accountId"]
 
-	role := req.Header.Get("X-Account-Role")
+	//
+	var role string = req.Header.Get("X-Account-Role")
+
+	if role != "admin" {
+		writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	admin := &model.Account{Role: role}
+
+	log.Printf("Blockkkk: accountId=%s, role=%q", accountId, role)
 
 	err := handler.AccountService.BlockAccount(admin, accountId)
 	if err != nil {
