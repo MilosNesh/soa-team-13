@@ -54,3 +54,7 @@ func (service *AccountService) BlockAccount(admin *model.Account, userId string)
 	}
 	return service.AccountRepo.BlockAccount(userId)
 }
+
+func (service *AccountService) ParseToken(token string) *dto.Claims {
+	return service.AccountRepo.ParseToken(token)
+}

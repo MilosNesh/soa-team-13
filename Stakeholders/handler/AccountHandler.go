@@ -2,7 +2,9 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -16,6 +18,13 @@ type AccountHandler struct {
 }
 
 func (handler *AccountHandler) GetAll(writer http.ResponseWriter, req *http.Request) {
+	var role string = req.Header.Get("X-Account-Role")
+
+	if role != "admin" {
+		writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
 	accounts, err := handler.AccountService.FindAll()
 
 	if err != nil {
@@ -112,7 +121,7 @@ func (handler *AccountHandler) Block(writer http.ResponseWriter, req *http.Reque
 	vars := mux.Vars(req)
 	accountId := vars["accountId"]
 
-	_, _, role, _ := ExtractUser(req)
+	role := req.Header.Get("X-Account-Role")
 	admin := &model.Account{Role: role}
 
 	err := handler.AccountService.BlockAccount(admin, accountId)
@@ -123,4 +132,36 @@ func (handler *AccountHandler) Block(writer http.ResponseWriter, req *http.Reque
 
 	writer.WriteHeader(http.StatusOK)
 	writer.Write([]byte("Account blocked successfully"))
+}
+
+func (handler *AccountHandler) ParseToken(writer http.ResponseWriter, req *http.Request) {
+	authHeader := req.Header.Get("Authorization")
+
+	if authHeader == "" {
+		writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	var claims *dto.Claims
+	claims = handler.AccountService.ParseToken(parts[1])
+	if claims == nil {
+		writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	writer.WriteHeader(http.StatusOK)
+	err := json.NewEncoder(writer).Encode(map[string]interface{}{
+		"username": claims.Username,
+		"role":     claims.Role,
+		"id":       claims.Subject,
+	})
+	if err != nil {
+		log.Println("Error encoding JSON response:", err)
+	}
+
 }

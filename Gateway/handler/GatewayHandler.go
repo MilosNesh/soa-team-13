@@ -1,38 +1,22 @@
 package handler
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
-	"io"
-	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"strconv"
 	"strings"
 
 	"gateway.com/dto"
-	"github.com/golang-jwt/jwt"
 )
 
 type GatewayHandler struct{}
 
 func (handler *GatewayHandler) HandleAccount(writer http.ResponseWriter, req *http.Request) {
-	var role = ""
-	var token = getToken(req)
+	var tokenData *dto.TokenData = parseToken(req)
 	path := strings.TrimPrefix(req.URL.Path, "/accounts/")
 
-	if token == "" && !(path == "" && req.Method == "POST") && !(path == "login" && req.Method == "POST") {
-		writer.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
-	if token != "" {
-		role, _, _ = parseToken(token)
-	}
-
-	if path == "" && req.Method == "GET" && role != "admin" {
+	if tokenData == nil && !(path == "" && req.Method == "POST") && !(path == "login" && req.Method == "POST") {
 		writer.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -50,21 +34,25 @@ func (handler *GatewayHandler) HandleAccount(writer http.ResponseWriter, req *ht
 		originalDirector(req)
 		req.URL.Path = "/accounts/" + path
 		req.Host = "stakeholders_service:8080"
+
+		if tokenData != nil {
+			req.Header.Set("X-Account-Username", tokenData.Username)
+			req.Header.Set("X-Account-Role", tokenData.Role)
+			req.Header.Set("X-Account-Id", tokenData.Id)
+		}
 	}
 
 	proxy.ServeHTTP(writer, req)
 }
 
 func (handler *GatewayHandler) HandleBlog(writer http.ResponseWriter, req *http.Request) {
-	var token = getToken(req)
+	var tokenData *dto.TokenData = parseToken(req)
 	path := strings.TrimPrefix(req.URL.Path, "/blogs/")
 
-	if token == "" {
+	if tokenData == nil {
 		writer.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-
-	// role, _, _ := parseToken(token) // ako treba rola za neku provjeru otkomentarisati, takodje username i id
 
 	//Prosljedjivanje zahtjeva
 	targetURL, err := url.Parse("http://blog_service:8081")
@@ -79,57 +67,25 @@ func (handler *GatewayHandler) HandleBlog(writer http.ResponseWriter, req *http.
 		originalDirector(req)
 		req.URL.Path = "/blogs/" + path
 		req.Host = "blog_service:8081"
+
+		if tokenData != nil {
+			req.Header.Set("X-Account-Username", tokenData.Username)
+			req.Header.Set("X-Account-Role", tokenData.Role)
+			req.Header.Set("X-Account-Id", tokenData.Id)
+		}
 	}
 
 	proxy.ServeHTTP(writer, req)
 }
 
 func (handler *GatewayHandler) HandleTour(writer http.ResponseWriter, req *http.Request) {
-	var token = getToken(req)
+	var tokenData *dto.TokenData = parseToken(req)
 	path := strings.TrimPrefix(req.URL.Path, "/tours/")
 
 	// Proveri token, osim ako je GET metod
-	if token == "" && !(path == "" && req.Method == "GET") {
+	if tokenData == nil && !(path == "" && req.Method == "GET") {
 		writer.WriteHeader(http.StatusUnauthorized)
 		return
-	}
-
-	id, role := "", ""
-	if token != "" {
-		role, _, id = parseToken(token)
-	}
-
-	if req.Method == "POST" && path == "" && role != "guide" {
-		writer.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	if req.Method == "POST" && path == "" {
-		body, err := io.ReadAll(req.Body)
-		if err != nil {
-			http.Error(writer, "Failed to read request body", http.StatusInternalServerError)
-			return
-		}
-		defer req.Body.Close()
-
-		var data map[string]interface{}
-		if err := json.Unmarshal(body, &data); err != nil {
-			http.Error(writer, "Failed to parse request body", http.StatusBadRequest)
-			return
-		}
-
-		if _, exists := data["authorId"]; exists {
-			data["authorId"] = id
-		}
-
-		updatedBody, err := json.Marshal(data)
-		if err != nil {
-			http.Error(writer, "Failed to re-encode request body", http.StatusInternalServerError)
-			return
-		}
-
-		req.Body = io.NopCloser(bytes.NewReader(updatedBody))
-		req.ContentLength = int64(len(updatedBody))
-		req.Header.Set("Content-Length", strconv.Itoa(len(updatedBody)))
 	}
 
 	targetURL, err := url.Parse("http://tours_service:8084")
@@ -144,47 +100,45 @@ func (handler *GatewayHandler) HandleTour(writer http.ResponseWriter, req *http.
 		originalDirector(req)
 		req.URL.Path = "/tours/" + path
 		req.Host = "tours_service:8084"
+
+		if tokenData != nil {
+			req.Header.Set("X-Account-Username", tokenData.Username)
+			req.Header.Set("X-Account-Role", tokenData.Role)
+			req.Header.Set("X-Account-Id", tokenData.Id)
+		}
 	}
 
-	// Poslati zahtev (s izmenjenim telom ako je POST)
+	proxy.ModifyResponse = func(resp *http.Response) error {
+		for key := range resp.Header {
+			if strings.HasPrefix(strings.ToLower(key), "access-control-") {
+				delete(resp.Header, key)
+			}
+		}
+		return nil
+	}
+
 	proxy.ServeHTTP(writer, req)
 }
 
-func parseToken(token string) (string, string, string) {
-	secretKey := []byte("sekret_key_12#4")
-
-	parsedToken, err := jwt.ParseWithClaims(token, &dto.Claims{}, func(token *jwt.Token) (interface{}, error) {
-		// Proveri da li je algoritam ispravan
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("nevalidan signing metod: %v", token.Header["alg"])
-		}
-		return secretKey, nil
-	})
-
-	if err != nil {
-		log.Fatalf("Greška pri parsiranju tokena: %v", err)
-	}
-
-	role, username, id := "", "", ""
-	if claims, ok := parsedToken.Claims.(*dto.Claims); ok && parsedToken.Valid {
-		role = claims.Role
-		username = claims.Username
-		id = claims.Subject
-	}
-	return role, username, id
-}
-
-func getToken(req *http.Request) string {
-	authHeader := req.Header.Get("Authorization")
-
+func parseToken(r *http.Request) *dto.TokenData {
+	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
-		return ""
+		return nil
 	}
 
-	parts := strings.Split(authHeader, " ")
-	if len(parts) != 2 || parts[0] != "Bearer" {
-		return ""
-	}
+	req, _ := http.NewRequest("GET", "http://stakeholders_service:8080/accounts/parsetoken", nil)
+	req.Header.Set("Authorization", authHeader)
 
-	return parts[1]
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return nil
+	}
+	defer resp.Body.Close()
+
+	var tokenData *dto.TokenData
+
+	if err := json.NewDecoder(resp.Body).Decode(&tokenData); err != nil {
+		return nil
+	}
+	return tokenData
 }

@@ -7,5 +7,6 @@ public interface ITourService
 {
     public Result<Tour> Create(Tour tour);
     public Result<List<Tour>> GetAll();
+    public Result<List<Tour>> GetByAuthor(string authorId);
 
 }

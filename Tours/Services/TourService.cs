@@ -32,4 +32,8 @@ public class TourService: ITourService
         return _tourRepository.GetAll();
     }
 
+    public Result<List<Tour>> GetByAuthor(string authorId)
+    {
+        return _tourRepository.GetByAuthorId(authorId);
+    }
 }
