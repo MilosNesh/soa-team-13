@@ -6,7 +6,7 @@ namespace Tours.Controllers
 {
 
     [ApiController]
-    [Route("key-points/")]
+    [Route("tours/key-points/")]
     public class KeyPointController : ControllerBase
     {
        private readonly IKeyPointService _keyPointService;
