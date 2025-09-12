@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FluentResults;
+using Microsoft.EntityFrameworkCore;
 using Tours.Models;
 
 namespace Tours.Repositorues
@@ -43,6 +44,13 @@ namespace Tours.Repositorues
             {
                 throw new Exception();
             }
+        }
+        public Result Delete(int id)
+        {
+            KeyPoint kp = _context.KeyPoints.FirstOrDefault(t => t.Id == id);
+            _context.Remove(kp);
+            var rows = _context.SaveChanges();
+            return rows > 0 ? Result.Ok() : Result.Fail($"KeyPoint {id} not found");
         }
     }
 }

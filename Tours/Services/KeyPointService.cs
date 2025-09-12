@@ -30,5 +30,10 @@ namespace Tours.Services
         {
             return _keyPointRepository.Get(id);
         }
+
+        public Result Delete(int id)
+        {
+            return _keyPointRepository.Delete(id);
+        }
     }
 }
