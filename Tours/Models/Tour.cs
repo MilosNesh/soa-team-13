@@ -27,7 +27,7 @@ public class Tour
     public TourStatus Status { get;  set; }
     public string Tags { get;  set; }
     public List<KeyPoint> KeyPoints { get; set; } = new List<KeyPoint>();
-    //public List<TourDuration> TourDurations { get; set; } = new List<TourDuration>();
+    public List<TourDuration> Durations { get; set; } = new List<TourDuration>();
     public double Length { get;  set; }
     public string AuthorId { get;  set; }
     public DateTime? PublishTime { get;  set; } = null;
@@ -71,8 +71,8 @@ public class Tour
 
     public bool CanPublish()
     {
-        return !string.IsNullOrEmpty(Name) && !string.IsNullOrEmpty(Description) && !string.IsNullOrEmpty(Description) && !string.IsNullOrEmpty(Tags);
-               //&& KeyPoints.Count >= 2 && TourDurations.Count >= 1;
+        return !string.IsNullOrEmpty(Name) && !string.IsNullOrEmpty(Description) && !string.IsNullOrEmpty(Description) && !string.IsNullOrEmpty(Tags)
+               && KeyPoints.Count >= 2 && Durations.Count >= 1;
     }
 
     public Tour Archive()
@@ -95,7 +95,7 @@ public class Tour
         return Status == TourStatus.Published;
     }
 
-    public Tour ReactivateTour()
+    public Tour Reactivate()
     {
         if (!CanReactivate())
             throw new ArgumentException("Nije moguce re-aktivirati ovu turu jer nije arhivirana");
@@ -112,19 +112,19 @@ public class Tour
         Status = TourStatus.Closed;
     }
 
-    //public Tour Preview()
-    //{
-    //    var keyPoints = new List<KeyPoint>();
-    //    keyPoints.Add(KeyPoints.FirstOrDefault());
-    //    return new Tour
-    //    {
-    //        Id = Id,
-    //        Name = Name,
-    //        Description = Description,
-    //        Tags = Tags,
-    //        Image = Image,
-    //        Cost = Cost,
-    //        KeyPoints = keyPoints
-    //    };
-    //}
+    public Tour Preview()
+    {
+        var keyPoints = new List<KeyPoint>();
+        keyPoints.Add(KeyPoints.FirstOrDefault());
+        return new Tour
+        {
+            Id = Id,
+            Name = Name,
+            Description = Description,
+            Tags = Tags,
+            Image = Image,
+            Cost = Cost,
+            KeyPoints = keyPoints
+        };
+    }
 }

@@ -108,6 +108,11 @@ func (handler *AccountHandler) Login(writer http.ResponseWriter, req *http.Reque
 		return
 	}
 
+	if str == "Blok" {
+		writer.WriteHeader((http.StatusForbidden))
+		return
+	}
+
 	if str == "Token" {
 		writer.WriteHeader(http.StatusInternalServerError)
 		return

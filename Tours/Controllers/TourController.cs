@@ -73,4 +73,53 @@ public class TourController : ControllerBase
         var result = _tourService.Update(tour);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
     }
+
+    [HttpPut("publish/{id:int}")]
+    public ActionResult<Tour> Publish([FromBody] Tour tour)
+    {
+        string role = Request.Headers["X-Account-Role"];
+        string accountId = Request.Headers["X-Account-Id"];
+        if (role != "guide")
+            return Unauthorized("You are not guide");
+        if (accountId != tour.AuthorId)
+            return Unauthorized("This tour is not yours");
+
+        var result = _tourService.Publish(tour);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+    }
+
+    [HttpPut("archive/{id:int}")]
+    public ActionResult<Tour> Archive([FromBody] Tour tour)
+    {
+        string role = Request.Headers["X-Account-Role"];
+        string accountId = Request.Headers["X-Account-Id"];
+        if (role != "guide")
+            return Unauthorized("You are not guide");
+        if (accountId != tour.AuthorId)
+            return Unauthorized("This tour is not yours");
+
+        var result = _tourService.Archive(tour);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+    }
+
+    [HttpPut("reactivate/{id:int}")]
+    public ActionResult<Tour> Reactivate([FromBody] Tour tour)
+    {
+        string role = Request.Headers["X-Account-Role"];
+        string accountId = Request.Headers["X-Account-Id"];
+        if (role != "guide")
+            return Unauthorized("You are not guide");
+        if (accountId != tour.AuthorId)
+            return Unauthorized("This tour is not yours");
+
+        var result = _tourService.Reactivate(tour);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+    }
+
+    [HttpGet("published")]
+    public ActionResult<List<Tour>> GetPublished()
+    {
+        var result = _tourService.GetPublished();
+        return Ok(result.Value);
+    }
 }

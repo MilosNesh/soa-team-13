@@ -58,6 +58,9 @@ func (repo *AccountRepository) Login(loginDetails *dto.LoginDetailsDto) (string,
 	if account.Password != loginDetails.Password {
 		return "Lozinka", nil
 	}
+	if account.Blocked {
+		return "Blok", nil
+	}
 	token, err := CreateToken(&account)
 
 	if err != nil {

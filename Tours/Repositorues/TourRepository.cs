@@ -14,7 +14,7 @@ public class TourRepository : ITourRepository
 
     public Tour Get(int id)
     {
-        return _context.Tours.Include(t => t.KeyPoints).FirstOrDefault(t => t.Id == id);
+        return _context.Tours.Include(t => t.KeyPoints).Include(t => t.Durations).FirstOrDefault(t => t.Id == id);
     }
 
     public Tour Create(Tour tour)
@@ -35,6 +35,7 @@ public class TourRepository : ITourRepository
     {
         try
         {
+            //DeleteDurations(tour);
             _context.Update(tour);
             _context.SaveChanges();
             return tour;
@@ -47,13 +48,13 @@ public class TourRepository : ITourRepository
 
     public List<Tour> GetByAuthorId(string id)
     {
-        var list = _context.Tours.Include(t => t.KeyPoints).Where(t => t.AuthorId == id).ToList();
+        var list = _context.Tours.Include(t => t.KeyPoints).Include(t => t.Durations).Where(t => t.AuthorId == id).ToList();
         return list;
     }
 
     public List<Tour> GetAll()
     {
-        var list = _context.Tours.Include(t => t.KeyPoints).ToList();
+        var list = _context.Tours.Include(t => t.KeyPoints).Include(t => t.Durations).ToList();
         return list;
     }
 
@@ -61,8 +62,23 @@ public class TourRepository : ITourRepository
     {
         return _context.Tours
             .AsNoTracking()
-            .Include(t => t.KeyPoints)
+            .Include(t => t.KeyPoints).Include(t => t.Durations)
             .FirstOrDefault(t => t.Id == id);
     }
 
+    public void DeleteDurations(Tour tour)
+    {
+        var existingTour = _context.Tours
+            .Include(t => t.Durations)
+            .FirstOrDefault(t => t.Id == tour.Id);
+
+        existingTour.Durations.Clear();
+        _context.SaveChanges();
+    }
+
+    public List<Tour> GetPublished()
+    {
+        var list = _context.Tours.Include(t => t.KeyPoints).Where(t => t.Status == TourStatus.Published).Select(t => t.Preview()).ToList();
+        return list;
+    }
 }

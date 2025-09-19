@@ -19,5 +19,7 @@ public class ToursContext : DbContext
             HasMany(t => t.KeyPoints).
             WithOne();
         modelBuilder.Entity<Tour>().HasMany(tr => tr.Reviews).WithOne().HasForeignKey(r => r.TourId);
+
+        modelBuilder.Entity<Tour>().HasMany(t => t.Durations).WithOne();
     }
 }
