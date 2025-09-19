@@ -10,5 +10,5 @@ public interface ITourRepository
     public List<Tour> GetByAuthorId(string id);
     public Tour Update(Tour tour);
     public Tour GetById(int id);
-
+    public List<Tour> GetPublished();
 }
