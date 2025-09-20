@@ -1,9 +1,9 @@
 FROM golang:alpine AS builder
 WORKDIR /app
-COPY go.mod .
-COPY go.sum .
+COPY Gateway/go.mod Gateway/go.sum ./
+COPY Proto ./Proto
+COPY Gateway/ ./
 RUN go mod download
-COPY . .
 RUN go build -o gateway
 
 FROM alpine

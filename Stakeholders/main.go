@@ -1,11 +1,17 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log"
+	"net"
 	"net/http"
+
+	"grpc/proto"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"google.golang.org/grpc"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"stakeholders.com/handler"
@@ -59,6 +65,28 @@ func initDB() *gorm.DB {
 	return database
 }
 
+type Server struct {
+	proto.UnimplementedStakeholdersServiceServer
+	accountService *service.AccountService
+}
+
+func startGRPCServer(accountService *service.AccountService) {
+	grpcServer := grpc.NewServer()
+
+	// Registracija gRPC servisa
+	proto.RegisterStakeholdersServiceServer(grpcServer, &Server{accountService: accountService})
+
+	listener, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+	}
+
+	fmt.Println("gRPC server started on port 50051")
+	if err := grpcServer.Serve(listener); err != nil {
+		log.Fatalf("Failed to serve gRPC server: %v", err)
+	}
+}
+
 func startServer(handler *handler.StakeholdersHandler) {
 	router := mux.NewRouter().StrictSlash(false)
 
@@ -96,10 +124,19 @@ func main() {
 
 	// profileHandler := &handler.StakeholdersHandler{ProfileHandler: handler.ProfileHandler {profileService: profileService}}
 
+	go startGRPCServer(accountService)
+
 	handler := &handler.StakeholdersHandler{
 		AccountHandler: accountHandler,
 		ProfileHandler: profileHandler,
 	}
 
 	startServer(handler)
+}
+func (s *Server) RegisterAccount(ctx context.Context, req *proto.RegisterAccountRequest) (*proto.RegisterAccountResponse, error) {
+	return s.accountService.RegisterGRPC(ctx, req)
+}
+
+func (s *Server) Login(ctx context.Context, req *proto.LoginRequest) (*proto.LoginResponse, error) {
+	return s.accountService.LoginGRPC(ctx, req)
 }

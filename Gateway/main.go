@@ -26,5 +26,6 @@ func startServer(handler *handler.GatewayHandler) {
 
 func main() {
 	handler := &handler.GatewayHandler{}
+	handler.ConnectToGRPCServer()
 	startServer(handler)
 }
