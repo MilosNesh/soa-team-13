@@ -1,16 +1,25 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
 
+	"grpc/proto"
+
 	"gateway.com/dto"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
-type GatewayHandler struct{}
+type GatewayHandler struct {
+	grpcClient proto.StakeholdersServiceClient
+}
 
 func (handler *GatewayHandler) HandleAccount(writer http.ResponseWriter, req *http.Request) {
 	var tokenData *dto.TokenData = parseToken(req)
@@ -18,6 +27,16 @@ func (handler *GatewayHandler) HandleAccount(writer http.ResponseWriter, req *ht
 
 	if tokenData == nil && !(path == "" && req.Method == "POST") && !(path == "login" && req.Method == "POST") {
 		writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	if path == "login" && req.Method == "POST" {
+		handler.handleLoginWithGRPC(writer, req)
+		return
+	}
+
+	if path == "" && req.Method == "POST" {
+		handler.handleRegisterWithGRPC(writer, req)
 		return
 	}
 
@@ -141,4 +160,57 @@ func parseToken(r *http.Request) *dto.TokenData {
 		return nil
 	}
 	return tokenData
+}
+
+func (handler *GatewayHandler) ConnectToGRPCServer() {
+	conn, err := grpc.Dial("stakeholders_service:50051", grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("Ne može se povezati na gRPC server: %v", err)
+	}
+	handler.grpcClient = proto.NewStakeholdersServiceClient(conn)
+}
+
+func (handler *GatewayHandler) handleLoginWithGRPC(writer http.ResponseWriter, req *http.Request) {
+	println("Login sa grpc")
+	var loginReq proto.LoginRequest
+	err := json.NewDecoder(req.Body).Decode(&loginReq)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	loginResp, err := handler.grpcClient.Login(context.Background(), &loginReq)
+	if err != nil {
+		st, ok := status.FromError(err)
+		if ok {
+			http.Error(writer, st.Message(), http.StatusBadRequest)
+			return
+		}
+	}
+
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusOK)
+	writer.Write([]byte(fmt.Sprintf(`{"token":"%s"}`, loginResp.Token)))
+}
+
+func (handler *GatewayHandler) handleRegisterWithGRPC(writer http.ResponseWriter, req *http.Request) {
+	println("Register sa grpc")
+	var registerReq proto.RegisterAccountRequest
+	err := json.NewDecoder(req.Body).Decode(&registerReq)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	regResp, err := handler.grpcClient.RegisterAccount(context.Background(), &registerReq)
+	if err != nil {
+		st, ok := status.FromError(err)
+		if ok {
+			http.Error(writer, st.Message(), http.StatusBadRequest)
+			return
+		}
+	}
+	println(regResp)
+	writer.WriteHeader(http.StatusOK)
+	writer.Write([]byte(`{"message": "Uspješno registracija"}`))
 }

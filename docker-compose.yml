@@ -3,8 +3,8 @@ version: "3.7"
 services:
   gateway:
     build: 
-      context: ./gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: gateway/Dockerfile
     image: gateway
     container_name: gateway_service
     restart: always
@@ -12,10 +12,12 @@ services:
       - servers
     ports:
       - 8070:8070
+    depends_on:
+      - stakeholders
   stakeholders:
     build:
-      context: ./stakeholders
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: stakeholders/Dockerfile
     image: stakeholders
     container_name: stakeholders_service
     restart: always
@@ -23,6 +25,7 @@ services:
       - servers
     ports:
       - 8080:8080
+      - 50051:50051 
     depends_on:
       - database
 
