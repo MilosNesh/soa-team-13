@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.1
-// source: stakeholders.proto
+// source: stakeholders/stakeholders.proto
 
-package proto
+package stakeholders
 
 import (
 	context "context"
@@ -155,5 +155,5 @@ var StakeholdersService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "stakeholders.proto",
+	Metadata: "stakeholders/stakeholders.proto",
 }

@@ -1,21 +1,22 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
-
-	"grpc/proto"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"stakeholders.com/handler"
 	"stakeholders.com/model"
+	"stakeholders.com/proto/stakeholders"
 	"stakeholders.com/repo"
 	"stakeholders.com/service"
 )
@@ -65,26 +66,38 @@ func initDB() *gorm.DB {
 	return database
 }
 
-type Server struct {
-	proto.UnimplementedStakeholdersServiceServer
-	accountService *service.AccountService
-}
-
 func startGRPCServer(accountService *service.AccountService) {
-	grpcServer := grpc.NewServer()
-
-	// Registracija gRPC servisa
-	proto.RegisterStakeholdersServiceServer(grpcServer, &Server{accountService: accountService})
-
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		log.Fatalln(err)
 	}
+	defer func(listener net.Listener) {
+		err := listener.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(listener)
 
-	fmt.Println("gRPC server started on port 50051")
-	if err := grpcServer.Serve(listener); err != nil {
-		log.Fatalf("Failed to serve gRPC server: %v", err)
-	}
+	// Bootstrap gRPC server.
+	grpcServer := grpc.NewServer()
+	reflection.Register(grpcServer)
+
+	// Bootstrap gRPC service server and respond to request.
+	accountHandler := handler.AccountGrpcHandler{Service: accountService}
+	stakeholders.RegisterStakeholdersServiceServer(grpcServer, accountHandler)
+
+	go func() {
+		if err := grpcServer.Serve(listener); err != nil {
+			log.Fatal("server error: ", err)
+		}
+	}()
+
+	stopCh := make(chan os.Signal)
+	signal.Notify(stopCh, syscall.SIGTERM)
+
+	<-stopCh
+
+	grpcServer.Stop()
 }
 
 func startServer(handler *handler.StakeholdersHandler) {
@@ -132,11 +145,4 @@ func main() {
 	}
 
 	startServer(handler)
-}
-func (s *Server) RegisterAccount(ctx context.Context, req *proto.RegisterAccountRequest) (*proto.RegisterAccountResponse, error) {
-	return s.accountService.RegisterGRPC(ctx, req)
-}
-
-func (s *Server) Login(ctx context.Context, req *proto.LoginRequest) (*proto.LoginResponse, error) {
-	return s.accountService.LoginGRPC(ctx, req)
 }
