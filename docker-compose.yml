@@ -96,10 +96,40 @@ services:
     volumes:
       - postgres-data-tours:/var/lib/postgresql/data
       
+  shopping:
+    build:
+      context: ./shopping
+      dockerfile: Dockerfile
+    image: shopping
+    container_name: shopping_service
+    restart: always
+    networks:
+      - servers
+    ports:
+      - 8082:8082
+    depends_on:
+      - shopping_database
+
+  shopping_database:
+    image: postgres
+    container_name: shopping_postgres
+    restart: always
+    networks:
+      - servers
+    ports:
+      - 5002:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: super
+      POSTGRES_DB: shopping
+    volumes:
+      - postgres-data-shopping:/var/lib/postgresql/data
+
 volumes:
   postgres-data:
   postgres-data-tours:
   mongo-data:
+  postgres-data-shopping:
 
 networks:
   servers:
