@@ -1,12 +1,14 @@
 FROM golang:alpine AS builder
 WORKDIR /app
-COPY Gateway/go.mod Gateway/go.sum ./
-COPY Proto ./Proto
-COPY Gateway/ ./
+
+COPY go.mod .
+COPY go.sum .
+
 RUN go mod download
+COPY . .
 RUN go build -o gateway
 
 FROM alpine
 COPY --from=builder /app/gateway /usr/bin
-EXPOSE 8070
+EXPOSE 8070 8071
 ENTRYPOINT [ "gateway" ]

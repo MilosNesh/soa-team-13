@@ -2,11 +2,12 @@
 // versions:
 // 	protoc-gen-go v1.36.9
 // 	protoc        v6.32.1
-// source: stakeholders.proto
+// source: stakeholders/stakeholders.proto
 
-package proto
+package stakeholders
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -33,7 +34,7 @@ type RegisterAccountRequest struct {
 
 func (x *RegisterAccountRequest) Reset() {
 	*x = RegisterAccountRequest{}
-	mi := &file_stakeholders_proto_msgTypes[0]
+	mi := &file_stakeholders_stakeholders_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +46,7 @@ func (x *RegisterAccountRequest) String() string {
 func (*RegisterAccountRequest) ProtoMessage() {}
 
 func (x *RegisterAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stakeholders_proto_msgTypes[0]
+	mi := &file_stakeholders_stakeholders_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +59,7 @@ func (x *RegisterAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterAccountRequest.ProtoReflect.Descriptor instead.
 func (*RegisterAccountRequest) Descriptor() ([]byte, []int) {
-	return file_stakeholders_proto_rawDescGZIP(), []int{0}
+	return file_stakeholders_stakeholders_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *RegisterAccountRequest) GetUsername() string {
@@ -97,7 +98,7 @@ type RegisterAccountResponse struct {
 
 func (x *RegisterAccountResponse) Reset() {
 	*x = RegisterAccountResponse{}
-	mi := &file_stakeholders_proto_msgTypes[1]
+	mi := &file_stakeholders_stakeholders_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -109,7 +110,7 @@ func (x *RegisterAccountResponse) String() string {
 func (*RegisterAccountResponse) ProtoMessage() {}
 
 func (x *RegisterAccountResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stakeholders_proto_msgTypes[1]
+	mi := &file_stakeholders_stakeholders_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -122,7 +123,7 @@ func (x *RegisterAccountResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterAccountResponse.ProtoReflect.Descriptor instead.
 func (*RegisterAccountResponse) Descriptor() ([]byte, []int) {
-	return file_stakeholders_proto_rawDescGZIP(), []int{1}
+	return file_stakeholders_stakeholders_proto_rawDescGZIP(), []int{1}
 }
 
 type LoginRequest struct {
@@ -135,7 +136,7 @@ type LoginRequest struct {
 
 func (x *LoginRequest) Reset() {
 	*x = LoginRequest{}
-	mi := &file_stakeholders_proto_msgTypes[2]
+	mi := &file_stakeholders_stakeholders_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -147,7 +148,7 @@ func (x *LoginRequest) String() string {
 func (*LoginRequest) ProtoMessage() {}
 
 func (x *LoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stakeholders_proto_msgTypes[2]
+	mi := &file_stakeholders_stakeholders_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -160,7 +161,7 @@ func (x *LoginRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginRequest.ProtoReflect.Descriptor instead.
 func (*LoginRequest) Descriptor() ([]byte, []int) {
-	return file_stakeholders_proto_rawDescGZIP(), []int{2}
+	return file_stakeholders_stakeholders_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *LoginRequest) GetEmail() string {
@@ -186,7 +187,7 @@ type LoginResponse struct {
 
 func (x *LoginResponse) Reset() {
 	*x = LoginResponse{}
-	mi := &file_stakeholders_proto_msgTypes[3]
+	mi := &file_stakeholders_stakeholders_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -198,7 +199,7 @@ func (x *LoginResponse) String() string {
 func (*LoginResponse) ProtoMessage() {}
 
 func (x *LoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stakeholders_proto_msgTypes[3]
+	mi := &file_stakeholders_stakeholders_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -211,7 +212,7 @@ func (x *LoginResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginResponse.ProtoReflect.Descriptor instead.
 func (*LoginResponse) Descriptor() ([]byte, []int) {
-	return file_stakeholders_proto_rawDescGZIP(), []int{3}
+	return file_stakeholders_stakeholders_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *LoginResponse) GetToken() string {
@@ -221,11 +222,11 @@ func (x *LoginResponse) GetToken() string {
 	return ""
 }
 
-var File_stakeholders_proto protoreflect.FileDescriptor
+var File_stakeholders_stakeholders_proto protoreflect.FileDescriptor
 
-const file_stakeholders_proto_rawDesc = "" +
+const file_stakeholders_stakeholders_proto_rawDesc = "" +
 	"\n" +
-	"\x12stakeholders.proto\"z\n" +
+	"\x1fstakeholders/stakeholders.proto\x1a\x1cgoogle/api/annotations.proto\"z\n" +
 	"\x16RegisterAccountRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x14\n" +
@@ -236,32 +237,31 @@ const file_stakeholders_proto_rawDesc = "" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"%\n" +
 	"\rLoginResponse\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token2\x87\x01\n" +
-	"\x13StakeholdersService\x12F\n" +
-	"\x0fRegisterAccount\x12\x17.RegisterAccountRequest\x1a\x18.RegisterAccountResponse\"\x00\x12(\n" +
-	"\x05Login\x12\r.LoginRequest\x1a\x0e.LoginResponse\"\x00B\fZ\n" +
-	"grpc/protob\x06proto3"
+	"\x05token\x18\x01 \x01(\tR\x05token2\xb5\x01\n" +
+	"\x13StakeholdersService\x12Z\n" +
+	"\x0fRegisterAccount\x12\x17.RegisterAccountRequest\x1a\x18.RegisterAccountResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\"\t/accounts\x12B\n" +
+	"\x05Login\x12\r.LoginRequest\x1a\x0e.LoginResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/accounts/loginB\x14Z\x12proto/stakeholdersb\x06proto3"
 
 var (
-	file_stakeholders_proto_rawDescOnce sync.Once
-	file_stakeholders_proto_rawDescData []byte
+	file_stakeholders_stakeholders_proto_rawDescOnce sync.Once
+	file_stakeholders_stakeholders_proto_rawDescData []byte
 )
 
-func file_stakeholders_proto_rawDescGZIP() []byte {
-	file_stakeholders_proto_rawDescOnce.Do(func() {
-		file_stakeholders_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_stakeholders_proto_rawDesc), len(file_stakeholders_proto_rawDesc)))
+func file_stakeholders_stakeholders_proto_rawDescGZIP() []byte {
+	file_stakeholders_stakeholders_proto_rawDescOnce.Do(func() {
+		file_stakeholders_stakeholders_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_stakeholders_stakeholders_proto_rawDesc), len(file_stakeholders_stakeholders_proto_rawDesc)))
 	})
-	return file_stakeholders_proto_rawDescData
+	return file_stakeholders_stakeholders_proto_rawDescData
 }
 
-var file_stakeholders_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
-var file_stakeholders_proto_goTypes = []any{
+var file_stakeholders_stakeholders_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_stakeholders_stakeholders_proto_goTypes = []any{
 	(*RegisterAccountRequest)(nil),  // 0: RegisterAccountRequest
 	(*RegisterAccountResponse)(nil), // 1: RegisterAccountResponse
 	(*LoginRequest)(nil),            // 2: LoginRequest
 	(*LoginResponse)(nil),           // 3: LoginResponse
 }
-var file_stakeholders_proto_depIdxs = []int32{
+var file_stakeholders_stakeholders_proto_depIdxs = []int32{
 	0, // 0: StakeholdersService.RegisterAccount:input_type -> RegisterAccountRequest
 	2, // 1: StakeholdersService.Login:input_type -> LoginRequest
 	1, // 2: StakeholdersService.RegisterAccount:output_type -> RegisterAccountResponse
@@ -273,26 +273,26 @@ var file_stakeholders_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_stakeholders_proto_init() }
-func file_stakeholders_proto_init() {
-	if File_stakeholders_proto != nil {
+func init() { file_stakeholders_stakeholders_proto_init() }
+func file_stakeholders_stakeholders_proto_init() {
+	if File_stakeholders_stakeholders_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stakeholders_proto_rawDesc), len(file_stakeholders_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stakeholders_stakeholders_proto_rawDesc), len(file_stakeholders_stakeholders_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_stakeholders_proto_goTypes,
-		DependencyIndexes: file_stakeholders_proto_depIdxs,
-		MessageInfos:      file_stakeholders_proto_msgTypes,
+		GoTypes:           file_stakeholders_stakeholders_proto_goTypes,
+		DependencyIndexes: file_stakeholders_stakeholders_proto_depIdxs,
+		MessageInfos:      file_stakeholders_stakeholders_proto_msgTypes,
 	}.Build()
-	File_stakeholders_proto = out.File
-	file_stakeholders_proto_goTypes = nil
-	file_stakeholders_proto_depIdxs = nil
+	File_stakeholders_stakeholders_proto = out.File
+	file_stakeholders_stakeholders_proto_goTypes = nil
+	file_stakeholders_stakeholders_proto_depIdxs = nil
 }

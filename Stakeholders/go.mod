@@ -8,7 +8,6 @@ require (
 	google.golang.org/grpc v1.75.1
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.30.0
-	grpc/proto v0.0.1
 )
 
 require (
@@ -30,5 +29,3 @@ require (
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
 )
-
-replace grpc/proto => ./Proto

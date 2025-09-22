@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+option go_package = "proto/stakeholders";
+import "google/api/annotations.proto";
+
+service StakeholdersService {
+    rpc RegisterAccount(RegisterAccountRequest) returns (RegisterAccountResponse) {
+        option (google.api.http) = {
+            post: "/accounts"
+            body: "*"
+        };
+    }
+    rpc Login(LoginRequest) returns (LoginResponse) {
+        option (google.api.http) = {
+            post: "/accounts/login"
+            body: "*"
+        };
+    }
+}
+
+message RegisterAccountRequest {
+    string username = 1;
+    string password = 2;
+    string email = 3;
+    string role = 4;
+}
+
+message RegisterAccountResponse {}
+
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    string token = 1;
+}

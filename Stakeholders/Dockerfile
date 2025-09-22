@@ -1,11 +1,11 @@
 FROM golang:alpine AS builder
 WORKDIR /app
 
-COPY Stakeholders/go.mod Stakeholders/go.sum ./
-COPY Proto ./Proto
-COPY Stakeholders/ ./
+COPY go.mod .
+COPY go.sum .
 
 RUN go mod download
+COPY . . 
 RUN go build -o stakeholders
 
 FROM alpine
