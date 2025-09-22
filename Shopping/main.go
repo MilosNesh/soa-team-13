@@ -21,7 +21,7 @@ func initDB() *gorm.DB {
 		return nil
 	}
 
-	database.AutoMigrate(&model.ShoppingCart{}, &model.OrderItem{})
+	database.AutoMigrate(&model.ShoppingCart{}, &model.OrderItem{}, &model.TourPurchaseToken{})
 
 	return database
 }
@@ -37,6 +37,9 @@ func startServer(handler *handler.ShoppingHandler) {
 	router.HandleFunc("/shopping/{accountId}", handler.ShoppingCartHandler.FindByAccountId).Methods("GET")
 	router.HandleFunc("/shopping/", handler.ShoppingCartHandler.Create).Methods("POST")
 	router.HandleFunc("/shopping/", handler.ShoppingCartHandler.Update).Methods("PUT")
+
+	router.HandleFunc("/shopping/purchaseTokens/{accountId}", handler.TourPurchaseTokenHandler.GetAllByAccountId).Methods("GET")
+	router.HandleFunc("/shopping/purchaseTokens/", handler.TourPurchaseTokenHandler.Create).Methods("POST")
 
 	println("Server started...")
 	log.Fatal(http.ListenAndServe(":8082", router))
@@ -54,8 +57,13 @@ func main() {
 	shoppingCartService := &service.ShoppingCartService{ShoppingCartRepo: shoppingCartRepo}
 	shoppingCartHandler := handler.ShoppingCartHandler{ShoppingCartService: shoppingCartService}
 
+	tourPurchaseTokenRepo := &repo.TourPurchaseTokenRepository{DatabaseConnection: database}
+	tourPurchaseTokenService := &service.TourPurchaseTokenService{TourPurchaseTokenRepo: tourPurchaseTokenRepo}
+	tourPurchaseTokenHandler := handler.TourPurchaseTokenHandler{TourPurchaseTokenService: tourPurchaseTokenService}
+
 	handler := &handler.ShoppingHandler{
-		ShoppingCartHandler: shoppingCartHandler,
+		ShoppingCartHandler:      shoppingCartHandler,
+		TourPurchaseTokenHandler: tourPurchaseTokenHandler,
 	}
 
 	startServer(handler)

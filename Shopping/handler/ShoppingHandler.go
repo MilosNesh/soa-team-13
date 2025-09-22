@@ -1,5 +1,6 @@
 package handler
 
 type ShoppingHandler struct {
-	ShoppingCartHandler ShoppingCartHandler
+	ShoppingCartHandler      ShoppingCartHandler
+	TourPurchaseTokenHandler TourPurchaseTokenHandler
 }
