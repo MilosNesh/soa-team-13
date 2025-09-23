@@ -61,3 +61,7 @@ func (service *BlogService) HandleLike(ctx context.Context, blogId primitive.Obj
 		return true, err
 	}
 }
+
+func (s *BlogService) FindAllBlogs(ctx context.Context) ([]model.Blog, error) {
+	return s.BlogRepo.FindAll(ctx)
+}

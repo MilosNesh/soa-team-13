@@ -79,6 +79,7 @@ func initDB() *mongo.Client {
 func startServer(handler *handler.BlogHandler) {
 	router := mux.NewRouter().StrictSlash(false)
 
+	router.HandleFunc("/blogs", handler.GetAll).Methods("GET")
 	router.HandleFunc("/blogs/{id}", handler.Get).Methods("GET")
 	router.HandleFunc("/blogs/", handler.Create).Methods("POST")
 	router.HandleFunc("/blogs/{blogId}/like", handler.HandleLike).Methods("POST")

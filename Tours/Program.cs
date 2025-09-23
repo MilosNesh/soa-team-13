@@ -16,6 +16,8 @@ builder.Services.AddScoped<ITourReviewService, TourReviewService>();
 builder.Services.AddScoped<ITourReviewRepository, TourReviewRepository>();
 builder.Services.AddScoped<IKeyPointRepository, KeyPointRepository>();
 builder.Services.AddScoped<IKeyPointService, KeyPointService>();
+builder.Services.AddScoped<ITourExecutionService, TourExecutionService>();
+builder.Services.AddScoped<ITourExecutionRepository, TourExecutionRepository>();
 
 builder.Services.AddCors(options =>
 {

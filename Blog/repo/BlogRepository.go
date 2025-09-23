@@ -94,3 +94,25 @@ func (repo *BlogRepository) HasLiked(ctx context.Context, blogId primitive.Objec
 	count, err := repo.Collection.CountDocuments(ctx, filter)
 	return count > 0, err
 }
+
+func (r *BlogRepository) FindAll(ctx context.Context) ([]model.Blog, error) {
+	cursor, err := r.Collection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var blogs []model.Blog
+	for cursor.Next(ctx) {
+		var blog model.Blog
+		if err := cursor.Decode(&blog); err != nil {
+			return nil, err
+		}
+		blogs = append(blogs, blog)
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return blogs, nil
+}

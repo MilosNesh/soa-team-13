@@ -98,3 +98,25 @@ func (handler *BlogHandler) HandleLike(writer http.ResponseWriter, req *http.Req
 		writer.Write([]byte("like removed"))
 	}
 }
+
+func (handler *BlogHandler) GetAll(writer http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	blogs, err := handler.BlogService.FindAllBlogs(ctx)
+	writer.Header().Set("Content-Type", "application/json")
+
+	if err != nil {
+		if err == context.DeadlineExceeded {
+			log.Println("Pretraga blogova predugo trajala (timeout).")
+			writer.WriteHeader(http.StatusGatewayTimeout)
+		} else {
+			log.Printf("Greška prilikom dohvatanja svih blogova: %v", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+		}
+		return
+	}
+
+	writer.WriteHeader(http.StatusOK)
+	json.NewEncoder(writer).Encode(blogs)
+}
