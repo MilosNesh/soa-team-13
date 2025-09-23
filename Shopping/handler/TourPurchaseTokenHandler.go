@@ -4,10 +4,10 @@ import (
 	"Shopping/model"
 	"Shopping/service"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 )
 
 type TourPurchaseTokenHandler struct {
@@ -15,8 +15,15 @@ type TourPurchaseTokenHandler struct {
 }
 
 func (handler *TourPurchaseTokenHandler) GetAllByAccountId(writer http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	accountId := vars["accountId"]
+	var accountId string = req.Header.Get("X-Account-Id")
+	log.Println("X-Account-Id =", accountId)
+	if accountId == "" {
+		accountId = req.URL.Query().Get("accountId")
+		if accountId == "" {
+			http.Error(writer, "missing account id", http.StatusUnauthorized)
+			return
+		}
+	}
 
 	purchaseTokens, err := handler.TourPurchaseTokenService.FindAllByAccountId(accountId)
 
@@ -41,8 +48,7 @@ func (handler *TourPurchaseTokenHandler) Create(writer http.ResponseWriter, req 
 
 	purchaseToken.Id = uuid.New().String()
 
-	err = handler.TourPurchaseTokenService.Create(&purchaseToken)
-
+	created, err := handler.TourPurchaseTokenService.Create(&purchaseToken)
 	if err != nil {
 		println("Error while creating a new purchase token")
 		writer.WriteHeader(http.StatusExpectationFailed)
@@ -51,4 +57,5 @@ func (handler *TourPurchaseTokenHandler) Create(writer http.ResponseWriter, req 
 
 	writer.WriteHeader(http.StatusCreated)
 	writer.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(writer).Encode(created)
 }

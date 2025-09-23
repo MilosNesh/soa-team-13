@@ -33,12 +33,17 @@ type Server struct {
 func startServer(handler *handler.ShoppingHandler) {
 	router := mux.NewRouter().StrictSlash(false)
 
-	router.HandleFunc("/shopping/", handler.ShoppingCartHandler.GetAll).Methods("GET")
-	router.HandleFunc("/shopping/{accountId}", handler.ShoppingCartHandler.FindByAccountId).Methods("GET")
+	router.HandleFunc("/shopping/", handler.ShoppingCartHandler.GetOrCreate).Methods("GET")
+	router.HandleFunc("/shopping/all", handler.ShoppingCartHandler.GetAll).Methods("GET")
+	//router.HandleFunc("/shopping/{accountId}", handler.ShoppingCartHandler.FindByAccountId).Methods("GET")
 	router.HandleFunc("/shopping/", handler.ShoppingCartHandler.Create).Methods("POST")
 	router.HandleFunc("/shopping/", handler.ShoppingCartHandler.Update).Methods("PUT")
 
-	router.HandleFunc("/shopping/purchaseTokens/{accountId}", handler.TourPurchaseTokenHandler.GetAllByAccountId).Methods("GET")
+	router.HandleFunc("/shopping/orderItems/", handler.ShoppingCartHandler.AddItem).Methods("POST")
+
+	router.HandleFunc("/shopping/checkout/", handler.ShoppingCartHandler.Checkout).Methods("POST")
+
+	router.HandleFunc("/shopping/purchaseTokens/", handler.TourPurchaseTokenHandler.GetAllByAccountId).Methods("GET")
 	router.HandleFunc("/shopping/purchaseTokens/", handler.TourPurchaseTokenHandler.Create).Methods("POST")
 
 	println("Server started...")
@@ -53,13 +58,16 @@ func main() {
 		return
 	}
 
-	shoppingCartRepo := &repo.ShoppingCartRepository{DatabaseConnection: database}
-	shoppingCartService := &service.ShoppingCartService{ShoppingCartRepo: shoppingCartRepo}
-	shoppingCartHandler := handler.ShoppingCartHandler{ShoppingCartService: shoppingCartService}
-
 	tourPurchaseTokenRepo := &repo.TourPurchaseTokenRepository{DatabaseConnection: database}
 	tourPurchaseTokenService := &service.TourPurchaseTokenService{TourPurchaseTokenRepo: tourPurchaseTokenRepo}
 	tourPurchaseTokenHandler := handler.TourPurchaseTokenHandler{TourPurchaseTokenService: tourPurchaseTokenService}
+
+	shoppingCartRepo := &repo.ShoppingCartRepository{DatabaseConnection: database}
+	shoppingCartService := &service.ShoppingCartService{
+		ShoppingCartRepo:         shoppingCartRepo,
+		TourPurchaseTokenService: tourPurchaseTokenService,
+	}
+	shoppingCartHandler := handler.ShoppingCartHandler{ShoppingCartService: shoppingCartService}
 
 	handler := &handler.ShoppingHandler{
 		ShoppingCartHandler:      shoppingCartHandler,

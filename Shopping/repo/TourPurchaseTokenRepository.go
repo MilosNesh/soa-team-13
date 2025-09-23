@@ -25,7 +25,7 @@ func (repo *TourPurchaseTokenRepository) FindAllByAccountId(accountId string) ([
 	return purchaseTokens, nil
 }
 
-func (repo *TourPurchaseTokenRepository) Create(purchaseToken *model.TourPurchaseToken) error {
+func (repo *TourPurchaseTokenRepository) Create(purchaseToken *model.TourPurchaseToken) (*model.TourPurchaseToken, error) {
 	if purchaseToken.Id == "" {
 		purchaseToken.Id = uuid.New().String()
 	}
@@ -33,9 +33,10 @@ func (repo *TourPurchaseTokenRepository) Create(purchaseToken *model.TourPurchas
 	dbResult := repo.DatabaseConnection.Create(purchaseToken)
 
 	if dbResult.Error != nil {
-		return dbResult.Error
+		return nil, dbResult.Error
 	}
 	fmt.Println("Rows affected: ", dbResult.RowsAffected)
 	fmt.Printf("Created shopping cart: %+v\n", purchaseToken)
-	return nil
+
+	return purchaseToken, nil
 }

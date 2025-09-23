@@ -18,11 +18,11 @@ func (service *TourPurchaseTokenService) FindAllByAccountId(accountId string) ([
 	return purchaseTokens, nil
 }
 
-func (service *TourPurchaseTokenService) Create(purchaseToken *model.TourPurchaseToken) error {
-	err := service.TourPurchaseTokenRepo.Create(purchaseToken)
+func (service *TourPurchaseTokenService) Create(purchaseToken *model.TourPurchaseToken) (*model.TourPurchaseToken, error) {
+	purchaseToken, err := service.TourPurchaseTokenRepo.Create(purchaseToken)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return purchaseToken, nil
 }
