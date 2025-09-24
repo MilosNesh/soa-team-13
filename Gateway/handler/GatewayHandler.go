@@ -127,3 +127,36 @@ func parseToken(r *http.Request) *dto.TokenData {
 	}
 	return tokenData
 }
+
+func (handler *GatewayHandler) HandleShopping(writer http.ResponseWriter, req *http.Request) {
+	var tokenData *dto.TokenData = parseToken(req)
+	path := strings.TrimPrefix(req.URL.Path, "/shopping/")
+
+	if tokenData == nil {
+		writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	//Prosljedjivanje zahtjeva
+	targetURL, err := url.Parse("http://shopping_service:8082")
+	if err != nil {
+		http.Error(writer, "Invalid target URL", http.StatusInternalServerError)
+		return
+	}
+
+	proxy := httputil.NewSingleHostReverseProxy(targetURL)
+	originalDirector := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		originalDirector(req)
+		req.URL.Path = "/shopping/" + path
+		req.Host = "shopping_service:8082"
+
+		if tokenData != nil {
+			req.Header.Set("X-Account-Username", tokenData.Username)
+			req.Header.Set("X-Account-Role", tokenData.Role)
+			req.Header.Set("X-Account-Id", tokenData.Id)
+		}
+	}
+
+	proxy.ServeHTTP(writer, req)
+}

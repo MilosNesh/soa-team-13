@@ -22,6 +22,7 @@ func startServer(handler *handler.GatewayHandler) {
 	router.HandleFunc("/accounts/{anything:.*}", handler.HandleAccount).Methods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 	router.HandleFunc("/blogs/{anything:.*}", handler.HandleBlog).Methods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 	router.HandleFunc("/tours/{anything:.*}", handler.HandleTour).Methods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+	router.HandleFunc("/shopping/{anything:.*}", handler.HandleShopping).Methods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins([]string{"http://localhost:4200"}),
