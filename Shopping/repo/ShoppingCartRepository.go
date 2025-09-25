@@ -163,3 +163,18 @@ func (repo *ShoppingCartRepository) AddItem(orderItem *model.OrderItem) error {
 	fmt.Printf("Created shopping cart: %+v\n", orderItem)
 	return nil
 }
+
+func (repo *ShoppingCartRepository) ClearCart(cartID string) error {
+
+	dbResult := repo.DatabaseConnection.
+		Where("shopping_cart_id = ?", cartID).
+		Delete(&model.OrderItem{})
+
+	if dbResult.Error != nil {
+		return dbResult.Error
+	}
+
+	fmt.Println("Rows affected: ", dbResult.RowsAffected)
+	fmt.Printf("Deleted items from shopping cart")
+	return nil
+}

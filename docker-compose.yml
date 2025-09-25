@@ -1,6 +1,7 @@
 version: "3.7"
 
 services:
+
   gateway:
     build: 
       context: ./gateway
@@ -15,12 +16,31 @@ services:
       - 8071:8071
     depends_on:
       - stakeholders
+      - shopping
+
+  nats-server:
+    image: nats:latest
+    container_name: nats-server
+    ports:
+      - "4222:4222"
+    command: "-js"
+    networks: 
+      - servers
+
   stakeholders:
     build:
-      context: ./stakeholders
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Stakeholders/Dockerfile
     image: stakeholders
     container_name: stakeholders_service
+    environment:
+      - NATS_HOST=nats-server
+      - NATS_PORT=4222
+      - NATS_USER=
+      - NATS_PASS=
+      - PURCHASE_COMMAND_SUBJECT=purchase.checkout.command
+      - PURCHASE_REPLY_SUBJECT=purchase.checkout.reply
+      - NATS_QUEUE_GROUP=stakeholders_service
     restart: always
     networks:
       - servers
@@ -29,6 +49,7 @@ services:
       - 50051:50051 
     depends_on:
       - database
+      - nats-server
 
   database:
     image: postgres
@@ -99,10 +120,18 @@ services:
       
   shopping:
     build:
-      context: ./shopping
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Shopping/Dockerfile
     image: shopping
     container_name: shopping_service
+    environment:
+      - NATS_HOST=nats-server
+      - NATS_PORT=4222
+      - NATS_USER=
+      - NATS_PASS=
+      - PURCHASE_COMMAND_SUBJECT=purchase.checkout.command
+      - PURCHASE_REPLY_SUBJECT=purchase.checkout.reply
+      - NATS_QUEUE_GROUP=shopping_service
     restart: always
     networks:
       - servers
@@ -110,6 +139,8 @@ services:
       - 8082:8082
     depends_on:
       - shopping_database
+      - nats-server
+
 
   shopping_database:
     image: postgres

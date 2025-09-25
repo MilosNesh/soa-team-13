@@ -146,3 +146,25 @@ func (handler *ShoppingCartHandler) Checkout(writer http.ResponseWriter, req *ht
 	writer.WriteHeader(http.StatusOK)
 	json.NewEncoder(writer).Encode(purchaseTokens)
 }
+
+func (handler *ShoppingCartHandler) CheckoutWithSaga(writer http.ResponseWriter, req *http.Request) {
+	var accountId string = req.Header.Get("X-Account-Id")
+	log.Println("X-Account-Id =", accountId)
+	if accountId == "" {
+		accountId = req.URL.Query().Get("accountId")
+		if accountId == "" {
+			http.Error(writer, "missing account id", http.StatusUnauthorized)
+			return
+		}
+	}
+
+	purchaseTokens, err := handler.ShoppingCartService.CheckoutWithSaga(accountId)
+
+	if err != nil {
+		writer.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	writer.WriteHeader(http.StatusOK)
+	json.NewEncoder(writer).Encode(purchaseTokens)
+}

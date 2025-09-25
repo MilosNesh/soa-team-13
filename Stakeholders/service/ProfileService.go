@@ -21,7 +21,6 @@ func (service *ProfileService) FindByAccountId(accountId string) (*model.Profile
 	}
 
 	return profile, nil
-
 }
 
 func (service *ProfileService) UpdateProfile(profileDto dto.ProfileDto) (*model.Profile, error) {
@@ -60,4 +59,20 @@ func (service *ProfileService) UpdateProfile(profileDto dto.ProfileDto) (*model.
 	}
 
 	return profile, nil
+}
+
+func (service *ProfileService) HasSufficientBalance(accountId string, amount float64) (bool, error) {
+	profile, err := service.ProfileRepo.FindByAccountId(accountId)
+	if err != nil {
+		return false, err
+	}
+	return float64(profile.Balance) >= amount, nil
+}
+
+func (service *ProfileService) DeductBalance(accountId string, amount float64) error {
+	return service.ProfileRepo.UpdateBalance(accountId, -amount)
+}
+
+func (service *ProfileService) RefundBalance(accountId string, amount float64) error {
+	return service.ProfileRepo.UpdateBalance(accountId, +amount)
 }

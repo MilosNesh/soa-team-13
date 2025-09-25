@@ -19,6 +19,9 @@ import (
 	"stakeholders.com/proto/stakeholders"
 	"stakeholders.com/repo"
 	"stakeholders.com/service"
+
+	saga "github.com/MilosNesh/soa-team-13/common/saga/messaging"
+	natsmsg "github.com/MilosNesh/soa-team-13/common/saga/messaging/nats"
 )
 
 func initDB() *gorm.DB {
@@ -125,6 +128,8 @@ func main() {
 		return
 	}
 
+	cfg := loadConfig()
+
 	accountRepo := &repo.AccountRepository{DatabaseConnection: database}
 	accountService := &service.AccountService{AccountRepo: accountRepo}
 	accountHandler := handler.AccountHandler{AccountService: accountService}
@@ -139,10 +144,69 @@ func main() {
 
 	go startGRPCServer(accountService)
 
-	handler := &handler.StakeholdersHandler{
+	httpHandlers := &handler.StakeholdersHandler{
 		AccountHandler: accountHandler,
 		ProfileHandler: profileHandler,
 	}
 
-	startServer(handler)
+	//SAGA
+	replyPublisher := mustPublisher(cfg, cfg.ReplySubject)
+	commandSubscriber := mustSubscriber(cfg, cfg.CommandSubject, cfg.QueueGroup)
+
+	_, err := handler.NewPurchaseStakeholdersHandler(profileService, replyPublisher, commandSubscriber)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	startServer(httpHandlers)
+}
+
+type config struct {
+	NatsHost string
+	NatsPort string
+	NatsUser string
+	NatsPass string
+
+	CommandSubject string
+	ReplySubject   string
+	QueueGroup     string
+}
+
+func loadConfig() config {
+	c := config{
+		NatsHost:       getenv("NATS_HOST", "nats-server"),
+		NatsPort:       getenv("NATS_PORT", "4222"),
+		NatsUser:       getenv("NATS_USER", ""),
+		NatsPass:       getenv("NATS_PASS", ""),
+		CommandSubject: getenv("PURCHASE_COMMAND_SUBJECT", "purchase.checkout.command"),
+		ReplySubject:   getenv("PURCHASE_REPLY_SUBJECT", "purchase.checkout.reply"),
+		QueueGroup:     getenv("NATS_QUEUE_GROUP", "stakeholders_service"),
+	}
+	return c
+}
+
+func getenv(k, def string) string {
+	if v := getenvReal(k); v != "" {
+		return v
+	}
+	return def
+}
+
+// zameni implementacijom za svoj runtime (os.Getenv)
+func getenvReal(k string) string { return os.Getenv(k) }
+
+func mustPublisher(cfg config, subject string) saga.Publisher {
+	pub, err := natsmsg.NewNATSPublisher(cfg.NatsHost, cfg.NatsPort, cfg.NatsUser, cfg.NatsPass, subject)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return pub
+}
+
+func mustSubscriber(cfg config, subject, queueGroup string) saga.Subscriber {
+	sub, err := natsmsg.NewNATSSubscriber(cfg.NatsHost, cfg.NatsPort, cfg.NatsUser, cfg.NatsPass, subject, queueGroup)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return sub
 }

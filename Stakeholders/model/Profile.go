@@ -7,4 +7,5 @@ type Profile struct {
 	ProfilePicture string `json:"profile_picture"`
 	Bio            string `json:"bio"`
 	Motto          string `json:"motto"`
+	Balance        int64  `json:"balance" gorm:"type:bigint;not null;default:0"`
 }
