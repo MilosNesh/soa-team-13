@@ -19,6 +19,7 @@ import (
 
 func startServer(handler *handler.GatewayHandler) {
 	router := mux.NewRouter()
+	router.PathPrefix("/uploads/").Handler(http.HandlerFunc(handler.HandleStaticFiles))
 	router.HandleFunc("/accounts/{anything:.*}", handler.HandleAccount).Methods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 	router.HandleFunc("/blogs/{anything:.*}", handler.HandleBlog).Methods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 	router.HandleFunc("/tours/{anything:.*}", handler.HandleTour).Methods("GET", "POST", "PUT", "DELETE", "OPTIONS")

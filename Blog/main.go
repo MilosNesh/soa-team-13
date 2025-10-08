@@ -80,8 +80,10 @@ func startServer(handler *handler.BlogHandler) {
 	router := mux.NewRouter().StrictSlash(false)
 
 	router.HandleFunc("/blogs/{id}", handler.Get).Methods("GET")
+	router.HandleFunc("/blogs/", handler.GetAll).Methods("GET")
 	router.HandleFunc("/blogs/", handler.Create).Methods("POST")
 	router.HandleFunc("/blogs/{blogId}/like", handler.HandleLike).Methods("POST")
+	router.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("/uploads"))))
 
 	log.Println("Server started on port :8081...")
 	log.Fatal(http.ListenAndServe(":8081", router)) // stakeholders slusa na 8080

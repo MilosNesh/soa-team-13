@@ -2,6 +2,8 @@ package handler
 
 import (
 	"encoding/json"
+	"io"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -108,6 +110,7 @@ func (handler *GatewayHandler) HandleTour(writer http.ResponseWriter, req *http.
 func parseToken(r *http.Request) *dto.TokenData {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
+		log.Println("DEBUG: prazan header")
 		return nil
 	}
 
@@ -156,6 +159,34 @@ func (handler *GatewayHandler) HandleShopping(writer http.ResponseWriter, req *h
 			req.Header.Set("X-Account-Role", tokenData.Role)
 			req.Header.Set("X-Account-Id", tokenData.Id)
 		}
+	}
+
+	proxy.ServeHTTP(writer, req)
+}
+
+func (handler *GatewayHandler) HandleStaticFiles(writer http.ResponseWriter, req *http.Request) {
+	targetURL, err := url.Parse("http://blog_service:8081")
+	if err != nil {
+		http.Error(writer, "Invalid target URL", http.StatusInternalServerError)
+		return
+	}
+
+	proxy := httputil.NewSingleHostReverseProxy(targetURL)
+
+	originalDirector := proxy.Director
+
+	proxy.Director = func(req *http.Request) {
+		originalDirector(req)
+
+		req.URL.Host = targetURL.Host
+		req.URL.Scheme = targetURL.Scheme
+		req.Host = targetURL.Host
+
+		req.Body = nil
+		if req.GetBody != nil {
+			req.GetBody = func() (closer io.ReadCloser, e error) { return nil, nil }
+		}
+
 	}
 
 	proxy.ServeHTTP(writer, req)

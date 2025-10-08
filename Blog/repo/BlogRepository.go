@@ -55,6 +55,21 @@ func (repo *BlogRepository) Create(ctx context.Context, blog *model.Blog) error 
 	return nil
 }
 
+func (repo *BlogRepository) FindAll(ctx context.Context) ([]model.Blog, error) {
+	var blogs []model.Blog
+
+	cursor, err := repo.Collection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = cursor.All(ctx, &blogs); err != nil {
+		return nil, err
+	}
+
+	return blogs, nil
+}
+
 func (repo *BlogRepository) AddLike(ctx context.Context, blogId primitive.ObjectID, accountId string) error {
 	filter := bson.M{"_id": blogId}
 	update := bson.M{"$addToSet": bson.M{"likes": accountId}}

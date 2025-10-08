@@ -5,6 +5,7 @@ import (
 	"blog_project/repo"
 	"context"
 	"errors"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -25,6 +26,8 @@ func (service *BlogService) FindBlogById(ctx context.Context, id string) (*model
 
 		return nil, err
 	}
+	processImageUrl(&blog)
+
 	return &blog, nil
 }
 
@@ -34,6 +37,19 @@ func (service *BlogService) Create(ctx context.Context, blog *model.Blog) error 
 		return err
 	}
 	return nil
+}
+
+func (s *BlogService) FindAllBlogs(ctx context.Context) ([]model.Blog, error) {
+	blogs, err := s.BlogRepo.FindAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range blogs {
+		processImageUrl(&blogs[i])
+	}
+
+	return blogs, nil
 }
 
 func (service *BlogService) HandleLike(ctx context.Context, blogId primitive.ObjectID, accountId string) (bool, error) {
@@ -59,5 +75,11 @@ func (service *BlogService) HandleLike(ctx context.Context, blogId primitive.Obj
 	} else {
 		err = service.BlogRepo.AddLike(ctx, blogId, accountId)
 		return true, err
+	}
+}
+
+func processImageUrl(blog *model.Blog) {
+	if blog.ImageUrl != "" && !strings.HasPrefix(blog.ImageUrl, "/uploads/") {
+		blog.ImageUrl = "/uploads/" + blog.ImageUrl
 	}
 }

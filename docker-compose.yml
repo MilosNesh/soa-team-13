@@ -77,6 +77,8 @@ services:
       - servers
     ports:
       - 8081:8081
+    volumes:
+      - ./blog-data/uploads:/uploads 
     depends_on:
       - mongo_db
 
@@ -162,6 +164,7 @@ volumes:
   postgres-data-tours:
   mongo-data:
   postgres-data-shopping:
+  blog-data:
 
 networks:
   servers:
