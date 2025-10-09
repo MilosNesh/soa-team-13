@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -76,6 +77,36 @@ func (service *BlogService) HandleLike(ctx context.Context, blogId primitive.Obj
 		err = service.BlogRepo.AddLike(ctx, blogId, accountId)
 		return true, err
 	}
+}
+
+func (service *BlogService) AddComment(ctx context.Context, comment *model.Comment) error {
+	_, err := service.BlogRepo.FindById(ctx, comment.BlogId.Hex())
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return errors.New("blog not found")
+		}
+		return err
+	}
+
+	authorName, err := service.StakeholderService.GetAuthorUsername(comment.AuthorId)
+	if err != nil {
+		return err
+	}
+	if authorName == "" {
+		return errors.New("author not found")
+	}
+
+	comment.AuthorName = authorName
+
+	if comment.CreatedAt.IsZero() {
+		comment.CreatedAt = time.Now()
+	}
+
+	err = service.BlogRepo.AddComment(ctx, comment)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func processImageUrl(blog *model.Blog) {

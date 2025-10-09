@@ -49,6 +49,17 @@ func (repo *AccountRepository) FindAccount(accountId string) error {
 	return nil
 }
 
+func (repo *AccountRepository) FindById(accountId string) (model.Account, error) {
+	var account model.Account
+	dbResult := repo.DatabaseConnection.First(&account, "id = ?", accountId)
+
+	if dbResult.Error != nil {
+		return account, dbResult.Error
+	}
+
+	return account, nil
+}
+
 func (repo *AccountRepository) Login(loginDetails *dto.LoginDetailsDto) (string, error) {
 	var account model.Account
 	dbResult := repo.DatabaseConnection.First(&account, "email = ?", loginDetails.Email)

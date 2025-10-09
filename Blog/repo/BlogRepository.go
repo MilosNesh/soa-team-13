@@ -12,7 +12,8 @@ import (
 )
 
 type BlogRepository struct {
-	Collection *mongo.Collection
+	BlogsCollection    *mongo.Collection
+	CommentsCollection *mongo.Collection
 }
 
 func (repo *BlogRepository) FindById(ctx context.Context, id string) (model.Blog, error) {
@@ -24,26 +25,49 @@ func (repo *BlogRepository) FindById(ctx context.Context, id string) (model.Blog
 		return blog, mongo.ErrNoDocuments
 	}
 
-	filter := bson.M{"_id": objectId}
+	pipeline := []bson.M{
+		{"$match": bson.M{"_id": objectId}},
+		{"$lookup": bson.M{
+			"from":         "comments",
+			"localField":   "_id",
+			"foreignField": "blog_id",
+			"as":           "comments",
+		}},
+		{"$limit": 1},
+	}
 
-	err = repo.Collection.FindOne(ctx, filter).Decode(&blog)
+	cursor, err := repo.BlogsCollection.Aggregate(ctx, pipeline)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			log.Printf("Blog with ID %s not found.", id)
-			return blog, mongo.ErrNoDocuments
-		}
-		log.Printf("Error finding blog by ID %s: %v", id, err)
+		log.Printf("Error during aggregation for blog ID %s: %v", id, err)
 		return blog, err
+	}
+	defer cursor.Close(ctx)
+
+	if !cursor.Next(ctx) {
+		log.Printf("Blog with ID %s not found.", id)
+		return blog, mongo.ErrNoDocuments
+	}
+
+	if err := cursor.Decode(&blog); err != nil {
+		log.Printf("Error decoding blog result for ID %s: %v", id, err)
+		return blog, err
+	}
+
+	if blog.Comments == nil {
+		blog.Comments = []model.Comment{}
 	}
 
 	return blog, nil
 }
 
 func (repo *BlogRepository) Create(ctx context.Context, blog *model.Blog) error {
-	insertResult, err := repo.Collection.InsertOne(ctx, blog)
+	insertResult, err := repo.BlogsCollection.InsertOne(ctx, blog)
 	if err != nil {
 		log.Printf("Greška prilikom kreiranja blog posta: %v", err)
 		return err
+	}
+	if blog.Comments == nil {
+		blog.Comments = []model.Comment{}
 	}
 
 	log.Printf("Uspešno kreiran blog post sa ID: %v", insertResult.InsertedID)
@@ -58,7 +82,7 @@ func (repo *BlogRepository) Create(ctx context.Context, blog *model.Blog) error 
 func (repo *BlogRepository) FindAll(ctx context.Context) ([]model.Blog, error) {
 	var blogs []model.Blog
 
-	cursor, err := repo.Collection.Find(ctx, bson.M{})
+	cursor, err := repo.BlogsCollection.Find(ctx, bson.M{})
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +98,7 @@ func (repo *BlogRepository) AddLike(ctx context.Context, blogId primitive.Object
 	filter := bson.M{"_id": blogId}
 	update := bson.M{"$addToSet": bson.M{"likes": accountId}}
 
-	result, err := repo.Collection.UpdateOne(ctx, filter, update)
+	result, err := repo.BlogsCollection.UpdateOne(ctx, filter, update)
 
 	if err != nil {
 		return err
@@ -90,7 +114,7 @@ func (repo *BlogRepository) RemoveLike(ctx context.Context, blogId primitive.Obj
 	filter := bson.M{"_id": blogId}
 	update := bson.M{"$pull": bson.M{"likes": accountId}}
 
-	result, err := repo.Collection.UpdateOne(ctx, filter, update)
+	result, err := repo.BlogsCollection.UpdateOne(ctx, filter, update)
 
 	if err != nil {
 		return err
@@ -106,6 +130,18 @@ func (repo *BlogRepository) RemoveLike(ctx context.Context, blogId primitive.Obj
 func (repo *BlogRepository) HasLiked(ctx context.Context, blogId primitive.ObjectID, accountId string) (bool, error) {
 	filter := bson.M{"_id": blogId, "likes": accountId}
 
-	count, err := repo.Collection.CountDocuments(ctx, filter)
+	count, err := repo.BlogsCollection.CountDocuments(ctx, filter)
 	return count > 0, err
+}
+
+func (repo *BlogRepository) AddComment(ctx context.Context, comment *model.Comment) error {
+	commentsCollection := repo.CommentsCollection
+
+	_, err := commentsCollection.InsertOne(ctx, comment)
+	if err != nil {
+		log.Printf("Greška prilikom kreiranja komentara: %v", err)
+		return err
+	}
+
+	return nil
 }

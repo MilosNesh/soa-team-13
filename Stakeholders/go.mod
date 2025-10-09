@@ -1,6 +1,6 @@
 module stakeholders.com
 
-go 1.24.4
+go 1.24.5
 
 require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
@@ -11,10 +11,13 @@ require (
 )
 
 require (
+	github.com/klauspost/compress v1.18.0 // indirect
+	github.com/nats-io/nats.go v1.46.0 // indirect
+	github.com/nats-io/nkeys v0.4.11 // indirect
+	github.com/nats-io/nuid v1.0.1 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
-	google.golang.org/protobuf v1.36.6 // indirect
 )
 
 require (
@@ -30,5 +33,9 @@ require (
 	golang.org/x/text v0.27.0 // indirect
 )
 
-require github.com/MilosNesh/soa-team-13/common v0.0.0
+require (
+	github.com/MilosNesh/soa-team-13/common v0.0.0
+	google.golang.org/protobuf v1.36.6
+)
+
 replace github.com/MilosNesh/soa-team-13/common => ../common

@@ -90,6 +90,35 @@ func (handler *AccountHandler) FindAccount(writer http.ResponseWriter, req *http
 	writer.Write([]byte("Account exists"))
 }
 
+func (handler *AccountHandler) GetAccountDetails(writer http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	accountId := vars["accountId"]
+
+	account, err := handler.AccountService.FindAccountById(accountId)
+
+	if err != nil {
+		log.Printf("Greška pri dohvatanju naloga %s: %v", accountId, err)
+		http.Error(writer, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	if account == nil {
+		http.Error(writer, "Account not found", http.StatusNotFound)
+		return
+	}
+
+	responseDto := struct {
+		Id       string `json:"id"`
+		Username string `json:"username"`
+	}{
+		Id:       account.Id,
+		Username: account.Username,
+	}
+
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusOK)
+	json.NewEncoder(writer).Encode(responseDto)
+}
+
 func (handler *AccountHandler) Login(writer http.ResponseWriter, req *http.Request) {
 	var loginDetails dto.LoginDetailsDto
 	err := json.NewDecoder(req.Body).Decode(&loginDetails)

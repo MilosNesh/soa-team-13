@@ -35,9 +35,9 @@ func initDB() *mongo.Client {
 
 	fmt.Println("Uspešno povezan na MongoDB!")
 
-	collection := client.Database("blogdb").Collection("blogs")
+	blogsCollection := client.Database("blogdb").Collection("blogs")
 
-	_, err = collection.DeleteMany(ctx, bson.M{})
+	_, err = blogsCollection.DeleteMany(ctx, bson.M{})
 	if err != nil {
 		log.Printf("Upozorenje: Greška prilikom brisanja postojećih blogova (možda ne postoje): %v", err)
 	} else {
@@ -66,7 +66,7 @@ func initDB() *mongo.Client {
 
 	blogsToInsert := []interface{}{blog1, blog2, blog3}
 
-	insertResult, err := collection.InsertMany(ctx, blogsToInsert)
+	insertResult, err := blogsCollection.InsertMany(ctx, blogsToInsert)
 	if err != nil {
 		log.Fatalf("Greška prilikom ubacivanja početnih podataka: %v", err)
 	}
@@ -83,6 +83,7 @@ func startServer(handler *handler.BlogHandler) {
 	router.HandleFunc("/blogs/", handler.GetAll).Methods("GET")
 	router.HandleFunc("/blogs/", handler.Create).Methods("POST")
 	router.HandleFunc("/blogs/{blogId}/like", handler.HandleLike).Methods("POST")
+	router.HandleFunc("/blogs/{blogId}/comments", handler.AddComment).Methods("POST")
 	router.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("/uploads"))))
 
 	log.Println("Server started on port :8081...")
@@ -100,12 +101,16 @@ func main() {
 	}()
 
 	blogsCollection := mongoClient.Database("blogdb").Collection("blogs")
+	commentsCollection := mongoClient.Database("blogdb").Collection("comments")
 
 	stakeholderService := &service.StakeholderService{
 		BaseURL: "http://stakeholders:8080/",
 		Client:  &http.Client{},
 	}
-	blogRepo := &repo.BlogRepository{Collection: blogsCollection}
+	blogRepo := &repo.BlogRepository{
+		BlogsCollection:    blogsCollection,
+		CommentsCollection: commentsCollection,
+	}
 
 	blogService := &service.BlogService{BlogRepo: blogRepo, StakeholderService: stakeholderService}
 

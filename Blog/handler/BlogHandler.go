@@ -179,3 +179,49 @@ func (handler *BlogHandler) HandleLike(writer http.ResponseWriter, req *http.Req
 		writer.Write([]byte("like removed"))
 	}
 }
+
+func (handler *BlogHandler) AddComment(writer http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	blogIdStr := vars["blogId"]
+
+	authorId := req.Header.Get("X-Account-Id")
+	if authorId == "" {
+		http.Error(writer, "Autorizacija neuspešna: User ID (X-Account-Id) nije pronađen.", http.StatusUnauthorized)
+		return
+	}
+
+	blogId, err := primitive.ObjectIDFromHex(blogIdStr)
+	if err != nil {
+		http.Error(writer, "Invalid blog ID", http.StatusBadRequest)
+		return
+	}
+
+	var dto dto.AddCommentDto
+	if err := json.NewDecoder(req.Body).Decode(&dto); err != nil {
+		http.Error(writer, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	comment := model.Comment{
+		BlogId:   blogId,
+		AuthorId: authorId,
+		Content:  dto.Content,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = handler.BlogService.AddComment(ctx, &comment)
+
+	if err != nil {
+		if err.Error() == "blog not found" || err.Error() == "author not found" {
+			http.Error(writer, err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	writer.WriteHeader(http.StatusCreated)
+	json.NewEncoder(writer).Encode(comment)
+}

@@ -111,6 +111,7 @@ func startServer(handler *handler.StakeholdersHandler) {
 	router.HandleFunc("/accounts/doesExists/{accountId}", handler.AccountHandler.FindAccount).Methods("GET")
 	router.HandleFunc("/accounts/login", handler.AccountHandler.Login).Methods("POST")
 	router.HandleFunc("/accounts/{accountId}/block", handler.AccountHandler.Block).Methods("POST")
+	router.HandleFunc("/accounts/{accountId}/details", handler.AccountHandler.GetAccountDetails).Methods("GET")
 	router.HandleFunc("/accounts/parsetoken", handler.AccountHandler.ParseToken).Methods("GET")
 
 	router.HandleFunc("/accounts/profiles/{accountId}", handler.ProfileHandler.FindByAccountId).Methods("GET")

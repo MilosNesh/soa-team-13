@@ -42,6 +42,18 @@ func (service *AccountService) FindAccount(accountId string) (bool, error) {
 	return true, nil
 }
 
+func (service *AccountService) FindAccountById(accountId string) (*model.Account, error) {
+	account, err := service.AccountRepo.FindById(accountId)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &account, nil
+}
+
 func (service *AccountService) Login(loginDetails *dto.LoginDetailsDto) string {
 	str, _ := service.AccountRepo.Login(loginDetails)
 
