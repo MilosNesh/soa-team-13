@@ -3,7 +3,7 @@ version: "3.7"
 x-logging: &fluent-bit
   driver: "fluentd"
   options:
-    fluentd-address: 172.19.0.5:24224
+    fluentd-address: 172.19.0.6:24224
 
 services:
 
@@ -43,13 +43,14 @@ services:
     image: stakeholders
     container_name: stakeholders_service
     environment:
-      - NATS_HOST=nats-server
-      - NATS_PORT=4222
-      - NATS_USER=
-      - NATS_PASS=
-      - PURCHASE_COMMAND_SUBJECT=purchase.checkout.command
-      - PURCHASE_REPLY_SUBJECT=purchase.checkout.reply
-      - NATS_QUEUE_GROUP=stakeholders_service
+      JAEGER_ENDPOINT: http://jaeger:14268/api/traces
+      NATS_HOST: nats-server
+      NATS_PORT: 4222
+      NATS_USER: ""
+      NATS_PASS: ""
+      PURCHASE_COMMAND_SUBJECT: purchase.checkout.command
+      PURCHASE_REPLY_SUBJECT: purchase.checkout.reply
+      NATS_QUEUE_GROUP: stakeholders_service
     restart: always
     networks:
       - servers
@@ -86,6 +87,8 @@ services:
     image: blog
     container_name: blog_service
     restart: always
+    environment:
+      JAEGER_ENDPOINT: http://jaeger:14268/api/traces
     networks:
       - servers
       - monitoring

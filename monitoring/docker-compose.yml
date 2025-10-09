@@ -36,6 +36,19 @@ services:
     networks:
       - monitoring
 
+  jaeger:
+    image: jaegertracing/all-in-one:1.34
+    ports:
+      - "9000:16686"
+      - "14268:14268"
+      - "6831:6831/udp" 
+    networks:
+      - monitoring
+    environment:
+      - JAEGER_AGENT_HOST=jaeger 
+      - JAEGER_REPORTER_HOST=jaeger
+      - SPAN_STORAGE_TYPE=badger
+
 networks:
   monitoring:
     name: monitoring

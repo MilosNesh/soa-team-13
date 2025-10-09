@@ -17,25 +17,35 @@ import (
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const UploadDir = "/uploads"
 
 type BlogHandler struct {
 	BlogService *service.BlogService
+	Tracer      *sdktrace.TracerProvider
+	ServiceName string
 }
 
 func (handler *BlogHandler) Get(writer http.ResponseWriter, req *http.Request) {
+	traceContext, span := (trace.TracerProvider)(handler.Tracer).Tracer(handler.ServiceName).Start(req.Context(), "blog-get-by-id")
+	defer func() { span.End() }()
+
 	id := mux.Vars(req)["id"]
+	span.AddEvent(fmt.Sprintf("Fetching blog with ID: %s", id))
 	log.Printf("Blog sa id-em %s", id)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(traceContext, 5*time.Second)
 	defer cancel()
 
 	blog, err := handler.BlogService.FindBlogById(ctx, id)
 
 	writer.Header().Set("Content-Type", "application/json")
 	if err != nil {
+		span.RecordError(err, trace.WithAttributes())
 		if err == mongo.ErrNoDocuments {
 			log.Printf("Blog sa ID '%s' nije pronađen.", id)
 			writer.WriteHeader(http.StatusNotFound)
@@ -54,7 +64,10 @@ func (handler *BlogHandler) Get(writer http.ResponseWriter, req *http.Request) {
 }
 
 func (handler *BlogHandler) GetAll(writer http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	traceContext, span := (trace.TracerProvider)(handler.Tracer).Tracer(handler.ServiceName).Start(req.Context(), "blog-get-all")
+	defer func() { span.End() }()
+
+	ctx, cancel := context.WithTimeout(traceContext, 5*time.Second)
 	defer cancel()
 
 	blogs, err := handler.BlogService.FindAllBlogs(ctx)
@@ -62,6 +75,7 @@ func (handler *BlogHandler) GetAll(writer http.ResponseWriter, req *http.Request
 	writer.Header().Set("Content-Type", "application/json")
 
 	if err != nil {
+		span.RecordError(err, trace.WithAttributes())
 		log.Printf("Greška prilikom dohvatanja svih blogova: %v", err)
 		writer.WriteHeader(http.StatusInternalServerError)
 		return
@@ -72,6 +86,9 @@ func (handler *BlogHandler) GetAll(writer http.ResponseWriter, req *http.Request
 }
 
 func (handler *BlogHandler) Create(writer http.ResponseWriter, req *http.Request) {
+	traceContext, span := (trace.TracerProvider)(handler.Tracer).Tracer(handler.ServiceName).Start(req.Context(), "blog-create")
+	defer func() { span.End() }()
+
 	userID := req.Header.Get("X-Account-Id")
 	if userID == "" {
 		http.Error(writer, "Autorizacija neuspešna: User ID (X-Account-Id) nije pronađen.", http.StatusUnauthorized)
@@ -80,6 +97,7 @@ func (handler *BlogHandler) Create(writer http.ResponseWriter, req *http.Request
 
 	err := req.ParseMultipartForm(10 << 20)
 	if err != nil {
+		span.RecordError(err, trace.WithAttributes())
 		log.Printf("Greška prilikom parsiranja forme: %v", err)
 		http.Error(writer, "Greška prilikom parsiranja forme: "+err.Error(), http.StatusBadRequest)
 		return
@@ -113,9 +131,9 @@ func (handler *BlogHandler) Create(writer http.ResponseWriter, req *http.Request
 			os.Mkdir(UploadDir, os.ModePerm)
 		}
 
-		// Čuvanje fajla na disku
 		dst, err := os.Create(filePath)
 		if err != nil {
+			span.RecordError(err, trace.WithAttributes())
 			log.Printf("Greška pri kreiranju fajla na serveru: %v", err)
 			http.Error(writer, "Greška prilikom čuvanja fajla: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -123,6 +141,7 @@ func (handler *BlogHandler) Create(writer http.ResponseWriter, req *http.Request
 		defer dst.Close()
 
 		if _, err := io.Copy(dst, file); err != nil {
+			span.RecordError(err, trace.WithAttributes())
 			log.Printf("Greška pri kopiranju fajla: %v", err)
 			http.Error(writer, "Greška prilikom kopiranja fajla: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -130,16 +149,18 @@ func (handler *BlogHandler) Create(writer http.ResponseWriter, req *http.Request
 
 		newBlog.ImageUrl = fileName
 	} else if err != http.ErrMissingFile {
+		span.RecordError(err, trace.WithAttributes())
 		log.Printf("Greška pri obradi fajla: %v", err)
 		http.Error(writer, "Greška pri obradi fajla: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(traceContext, 5*time.Second)
 	defer cancel()
 
 	err = handler.BlogService.Create(ctx, &newBlog)
 	if err != nil {
+		span.RecordError(err, trace.WithAttributes())
 		log.Printf("Greška prilikom kreiranja novog bloga: %v", err)
 		writer.WriteHeader(http.StatusInternalServerError)
 		return
@@ -151,6 +172,9 @@ func (handler *BlogHandler) Create(writer http.ResponseWriter, req *http.Request
 }
 
 func (handler *BlogHandler) HandleLike(writer http.ResponseWriter, req *http.Request) {
+	traceContext, span := (trace.TracerProvider)(handler.Tracer).Tracer(handler.ServiceName).Start(req.Context(), "blog-handle-like")
+	defer func() { span.End() }()
+
 	vars := mux.Vars(req)
 	blogIdStr := vars["blogId"]
 
@@ -167,8 +191,9 @@ func (handler *BlogHandler) HandleLike(writer http.ResponseWriter, req *http.Req
 		return
 	}
 
-	liked, err := handler.BlogService.HandleLike(req.Context(), blogId, request.AccountId)
+	liked, err := handler.BlogService.HandleLike(traceContext, blogId, request.AccountId)
 	if err != nil {
+		span.RecordError(err, trace.WithAttributes())
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -181,6 +206,9 @@ func (handler *BlogHandler) HandleLike(writer http.ResponseWriter, req *http.Req
 }
 
 func (handler *BlogHandler) AddComment(writer http.ResponseWriter, req *http.Request) {
+	traceContext, span := (trace.TracerProvider)(handler.Tracer).Tracer(handler.ServiceName).Start(req.Context(), "blog-add-comment")
+	defer func() { span.End() }()
+
 	vars := mux.Vars(req)
 	blogIdStr := vars["blogId"]
 
@@ -208,12 +236,13 @@ func (handler *BlogHandler) AddComment(writer http.ResponseWriter, req *http.Req
 		Content:  dto.Content,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(traceContext, 5*time.Second)
 	defer cancel()
 
 	err = handler.BlogService.AddComment(ctx, &comment)
 
 	if err != nil {
+		span.RecordError(err, trace.WithAttributes())
 		if err.Error() == "blog not found" || err.Error() == "author not found" {
 			http.Error(writer, err.Error(), http.StatusNotFound)
 			return

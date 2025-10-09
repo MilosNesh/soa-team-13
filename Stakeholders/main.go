@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context" // DODATO
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time" // DODATO
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -22,7 +24,11 @@ import (
 
 	saga "github.com/MilosNesh/soa-team-13/common/saga/messaging"
 	natsmsg "github.com/MilosNesh/soa-team-13/common/saga/messaging/nats"
+
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
+
+const serviceName = "stakeholders-service"
 
 func initDB() *gorm.DB {
 	connectionStr := "host=database user=postgres password=super dbname=stakeholders port=5432 sslmode=disable"
@@ -69,7 +75,7 @@ func initDB() *gorm.DB {
 	return database
 }
 
-func startGRPCServer(accountService *service.AccountService) {
+func startGRPCServer(accountService *service.AccountService, tracerProvider *sdktrace.TracerProvider, serviceName string) {
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalln(err)
@@ -81,12 +87,14 @@ func startGRPCServer(accountService *service.AccountService) {
 		}
 	}(listener)
 
-	// Bootstrap gRPC server.
 	grpcServer := grpc.NewServer()
 	reflection.Register(grpcServer)
 
-	// Bootstrap gRPC service server and respond to request.
-	accountHandler := handler.AccountGrpcHandler{Service: accountService}
+	accountHandler := handler.AccountGrpcHandler{
+		Service:     accountService,
+		Tracer:      tracerProvider,
+		ServiceName: serviceName,
+	}
 	stakeholders.RegisterStakeholdersServiceServer(grpcServer, accountHandler)
 
 	go func() {
@@ -122,6 +130,21 @@ func startServer(handler *handler.StakeholdersHandler) {
 }
 
 func main() {
+	tracerProvider, err := initTracer()
+	if err != nil {
+		log.Fatalf("Greška prilikom inicijalizacije traganja: %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	defer func() {
+		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 5*time.Second)
+		defer shutdownCancel()
+		if err := tracerProvider.Shutdown(shutdownCtx); err != nil {
+			log.Fatalf("Greška prilikom gašenja TracerProvider-a: %v", err)
+		}
+	}()
+
 	database := initDB()
 
 	if database == nil {
@@ -133,17 +156,15 @@ func main() {
 
 	accountRepo := &repo.AccountRepository{DatabaseConnection: database}
 	accountService := &service.AccountService{AccountRepo: accountRepo}
-	accountHandler := handler.AccountHandler{AccountService: accountService}
 
-	// handler := &handler.StakeholdersHandler{AccountHandler: handler.AccountHandler{AccountService: accountService}}
+	accountHandler := handler.AccountHandler{AccountService: accountService}
 
 	profileRepo := &repo.ProfileRepository{DatabaseConnection: database}
 	profileService := &service.ProfileService{ProfileRepo: profileRepo}
+
 	profileHandler := handler.ProfileHandler{ProfileService: profileService}
 
-	// profileHandler := &handler.StakeholdersHandler{ProfileHandler: handler.ProfileHandler {profileService: profileService}}
-
-	go startGRPCServer(accountService)
+	go startGRPCServer(accountService, tracerProvider, serviceName)
 
 	httpHandlers := &handler.StakeholdersHandler{
 		AccountHandler: accountHandler,
@@ -154,7 +175,7 @@ func main() {
 	replyPublisher := mustPublisher(cfg, cfg.ReplySubject)
 	commandSubscriber := mustSubscriber(cfg, cfg.CommandSubject, cfg.QueueGroup)
 
-	_, err := handler.NewPurchaseStakeholdersHandler(profileService, replyPublisher, commandSubscriber)
+	_, err = handler.NewPurchaseStakeholdersHandler(profileService, replyPublisher, commandSubscriber)
 	if err != nil {
 		log.Fatal(err)
 	}

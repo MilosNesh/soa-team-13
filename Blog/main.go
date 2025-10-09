@@ -17,9 +17,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+const serviceName = "blog-service"
+
 func initDB() *mongo.Client {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel() // Uvek pozovi cancel() da oslobodiš resurse
+	defer cancel()
 
 	clientOptions := options.Client().ApplyURI("mongodb://mongo_db:27017")
 
@@ -87,10 +89,23 @@ func startServer(handler *handler.BlogHandler) {
 	router.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("/uploads"))))
 
 	log.Println("Server started on port :8081...")
-	log.Fatal(http.ListenAndServe(":8081", router)) // stakeholders slusa na 8080
+	log.Fatal(http.ListenAndServe(":8081", router))
 }
 
 func main() {
+	tracerProvider, err := initTracer()
+	if err != nil {
+		log.Fatalf("Greška prilikom inicijalizacije traganja: %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	defer func() {
+		if err := tracerProvider.Shutdown(ctx); err != nil {
+			log.Fatalf("Greška prilikom gašenja TracerProvider-a: %v", err)
+		}
+	}()
+
 	mongoClient := initDB()
 
 	defer func() {
@@ -114,7 +129,11 @@ func main() {
 
 	blogService := &service.BlogService{BlogRepo: blogRepo, StakeholderService: stakeholderService}
 
-	blogHandler := &handler.BlogHandler{BlogService: blogService}
+	blogHandler := &handler.BlogHandler{
+		BlogService: blogService,
+		Tracer:      tracerProvider,
+		ServiceName: serviceName,
+	}
 
 	startServer(blogHandler)
 }
