@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package blog;
+
+import "google/api/annotations.proto";
+
+option go_package = "blog.com/proto/blog";
+
+service BlogService {
+    rpc GetBlog (GetBlogRequest) returns (GetBlogResponse) {
+        option (google.api.http) = {
+            get: "/v1/blogs/{id}"
+        };
+    }
+    
+    rpc CreateBlog (CreateBlogRequest) returns (CreateBlogResponse) {
+        option (google.api.http) = {
+            post: "/v1/blogs"
+            body: "*"
+        };
+    }
+}
+
+message GetBlogRequest {
+    string id = 1;
+}
+
+message GetBlogResponse {
+    Blog blog = 1;
+}
+
+message CreateBlogRequest {
+    string title = 1;
+    string content = 2;
+    string user_id = 3;
+    bytes image = 4;
+    string image_filename = 5;
+}
+
+message CreateBlogResponse {
+    Blog blog = 1;
+}
+
+message Blog {
+    string id = 1;
+    string title = 2;
+    string content = 3;
+    string user_id = 4;
+    string image_url = 5;
+    string created_at = 6;
+    repeated string likes = 7;
+    repeated Comment comments = 8;
+}
+
+message Comment {
+    string id = 1;
+    string blog_id = 2;
+    string author_id = 3;
+    string author_name = 4;
+    string content = 5;
+    string created_at = 6;
+}

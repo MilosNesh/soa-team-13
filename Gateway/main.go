@@ -7,8 +7,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"gateway.com/handler"
+	"gateway.com/proto/blog"
 	"gateway.com/proto/stakeholders"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -35,26 +37,48 @@ func startServer(handler *handler.GatewayHandler) {
 }
 
 func connectToGRPCServer() {
-	conn, err := grpc.DialContext(
+	gwmux := runtime.NewServeMux()
+
+	connStakeholders, err := grpc.DialContext(
 		context.Background(),
 		"stakeholders:50051",
 		grpc.WithBlock(),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
-
 	if err != nil {
-		log.Fatalln("Failed to dial server:", err)
+		log.Fatalln("Failed to dial Stakeholders server:", err)
 	}
+	defer connStakeholders.Close()
 
-	gwmux := runtime.NewServeMux()
-	client := stakeholders.NewStakeholdersServiceClient(conn)
+	clientStakeholders := stakeholders.NewStakeholdersServiceClient(connStakeholders)
 	err = stakeholders.RegisterStakeholdersServiceHandlerClient(
 		context.Background(),
 		gwmux,
-		client,
+		clientStakeholders,
 	)
 	if err != nil {
-		log.Fatalln("Failed to register gateway:", err)
+		log.Fatalln("Failed to register Stakeholders gateway:", err)
+	}
+
+	connBlog, err := grpc.DialContext(
+		context.Background(),
+		"blog:50052",
+		grpc.WithBlock(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Fatalln("Failed to dial Blog server:", err)
+	}
+	defer connBlog.Close()
+
+	clientBlog := blog.NewBlogServiceClient(connBlog)
+	err = blog.RegisterBlogServiceHandlerClient(
+		context.Background(),
+		gwmux,
+		clientBlog,
+	)
+	if err != nil {
+		log.Fatalln("Failed to register Blog gateway:", err)
 	}
 
 	corsHandler := handlers.CORS(
@@ -69,20 +93,23 @@ func connectToGRPCServer() {
 	}
 
 	go func() {
-		if err := gwServer.ListenAndServe(); err != nil {
-			log.Fatal("server error: ", err)
+		if err := gwServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal("Gateway server error: ", err)
 		}
 	}()
 
-	stopCh := make(chan os.Signal)
-	signal.Notify(stopCh, syscall.SIGTERM)
-
+	stopCh := make(chan os.Signal, 1)
+	signal.Notify(stopCh, syscall.SIGINT, syscall.SIGTERM)
 	<-stopCh
 
-	if err = gwServer.Close(); err != nil {
-		log.Fatalln("error while stopping server: ", err)
+	log.Println("Shutting down Gateway server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err = gwServer.Shutdown(ctx); err != nil {
+		log.Fatalln("Error while stopping server: ", err)
 	}
-	log.Println("Started GRPC...")
+	log.Println("GRPC Gateway server stopped.")
 }
 
 func main() {

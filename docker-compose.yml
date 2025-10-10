@@ -95,6 +95,7 @@ services:
     logging: *fluent-bit
     ports:
       - 8081:8081
+      - 50052:50052
     volumes:
       - ./blog-data/uploads:/uploads 
     depends_on:

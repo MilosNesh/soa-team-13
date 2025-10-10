@@ -44,8 +44,11 @@ func (handler *GatewayHandler) HandleAccount(writer http.ResponseWriter, req *ht
 }
 
 func (handler *GatewayHandler) HandleBlog(writer http.ResponseWriter, req *http.Request) {
+	log.Printf("DEBUG Gateway: HandleBlog received request for path: %s", req.URL.Path)
 	var tokenData *dto.TokenData = parseToken(req)
 	path := strings.TrimPrefix(req.URL.Path, "/blogs/")
+
+	log.Printf("DEBUG Gateway: Trimmed path: %s", path)
 
 	//Prosljedjivanje zahtjeva
 	targetURL, err := url.Parse("http://blog_service:8081")
@@ -54,12 +57,16 @@ func (handler *GatewayHandler) HandleBlog(writer http.ResponseWriter, req *http.
 		return
 	}
 
+	log.Printf("DEBUG Gateway: Target URL for proxy: %s", targetURL.String())
+
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 	originalDirector := proxy.Director
 	proxy.Director = func(req *http.Request) {
 		originalDirector(req)
 		req.URL.Path = "/blogs/" + path
 		req.Host = "blog_service:8081"
+
+		log.Printf("DEBUG Gateway: Proxying to new path: %s on host: %s", req.URL.Path, req.Host)
 
 		if tokenData != nil {
 			req.Header.Set("X-Account-Username", tokenData.Username)

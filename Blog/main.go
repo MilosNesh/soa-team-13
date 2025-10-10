@@ -3,18 +3,26 @@ package main
 import (
 	"blog_project/handler"
 	"blog_project/model"
+	"blog_project/proto/blog"
 	"blog_project/repo"
 	"blog_project/service"
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.opentelemetry.io/otel/sdk/trace"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 const serviceName = "blog-service"
@@ -83,6 +91,7 @@ func startServer(handler *handler.BlogHandler) {
 
 	router.HandleFunc("/blogs/{id}", handler.Get).Methods("GET")
 	router.HandleFunc("/blogs/", handler.GetAll).Methods("GET")
+	router.HandleFunc("/blogs", handler.GetAll).Methods("GET")
 	router.HandleFunc("/blogs/", handler.Create).Methods("POST")
 	router.HandleFunc("/blogs/{blogId}/like", handler.HandleLike).Methods("POST")
 	router.HandleFunc("/blogs/{blogId}/comments", handler.AddComment).Methods("POST")
@@ -90,6 +99,37 @@ func startServer(handler *handler.BlogHandler) {
 
 	log.Println("Server started on port :8081...")
 	log.Fatal(http.ListenAndServe(":8081", router))
+}
+
+func startGRPCServer(blogService *service.BlogService, tracerProvider *trace.TracerProvider) {
+	listener, err := net.Listen("tcp", ":50052")
+	if err != nil {
+		log.Fatalf("Failed to listen on port 50052: %v", err)
+	}
+
+	grpcServer := grpc.NewServer()
+	reflection.Register(grpcServer)
+
+	blogGrpcHandler := &handler.BlogGrpcHandler{
+		BlogService: blogService,
+		Tracer:      tracerProvider,
+		ServiceName: serviceName,
+	}
+	blog.RegisterBlogServiceServer(grpcServer, blogGrpcHandler)
+
+	go func() {
+		log.Println("gRPC Server started on port :50052...")
+		if err := grpcServer.Serve(listener); err != nil {
+			log.Fatalf("Failed to serve gRPC: %v", err)
+		}
+	}()
+
+	stopCh := make(chan os.Signal, 1)
+	signal.Notify(stopCh, syscall.SIGTERM, syscall.SIGINT)
+	<-stopCh
+
+	log.Println("Shutting down gRPC server...")
+	grpcServer.GracefulStop()
 }
 
 func main() {
@@ -134,6 +174,8 @@ func main() {
 		Tracer:      tracerProvider,
 		ServiceName: serviceName,
 	}
+
+	go startGRPCServer(blogService, tracerProvider)
 
 	startServer(blogHandler)
 }
