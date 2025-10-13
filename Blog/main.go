@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -86,19 +87,35 @@ func initDB() *mongo.Client {
 	return client
 }
 
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("=== REQUEST: %s %s ===", r.Method, r.URL.Path)
+		next.ServeHTTP(w, r)
+	})
+}
+
 func startServer(handler *handler.BlogHandler) {
 	router := mux.NewRouter().StrictSlash(false)
 
+	router.HandleFunc("/blogs/{blogId}/comments", handler.AddComment).Methods("POST", "OPTIONS")
+	router.HandleFunc("/blogs/{blogId}/like", handler.HandleLike).Methods("POST", "OPTIONS")
 	router.HandleFunc("/blogs/{id}", handler.Get).Methods("GET")
 	router.HandleFunc("/blogs/", handler.GetAll).Methods("GET")
 	router.HandleFunc("/blogs", handler.GetAll).Methods("GET")
 	router.HandleFunc("/blogs/", handler.Create).Methods("POST")
-	router.HandleFunc("/blogs/{blogId}/like", handler.HandleLike).Methods("POST")
-	router.HandleFunc("/blogs/{blogId}/comments", handler.AddComment).Methods("POST")
 	router.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("/uploads"))))
+
+	corsHandler := handlers.CORS(
+		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+		handlers.AllowedHeaders([]string{"Content-Type", "Authorization", "X-Account-Id", "X-Account-Username", "X-Account-Role"}),
+	)(router)
+
+	router.Use(loggingMiddleware)
 
 	log.Println("Server started on port :8081...")
 	log.Fatal(http.ListenAndServe(":8081", router))
+	log.Fatal(http.ListenAndServe(":8081", corsHandler))
 }
 
 func startGRPCServer(blogService *service.BlogService, tracerProvider *trace.TracerProvider) {
@@ -162,12 +179,18 @@ func main() {
 		BaseURL: "http://stakeholders:8080/",
 		Client:  &http.Client{},
 	}
+
+	followerService := &service.FollowerService{
+		BaseURL: "http://followers:8083/",
+		Client:  &http.Client{},
+	}
+
 	blogRepo := &repo.BlogRepository{
 		BlogsCollection:    blogsCollection,
 		CommentsCollection: commentsCollection,
 	}
 
-	blogService := &service.BlogService{BlogRepo: blogRepo, StakeholderService: stakeholderService}
+	blogService := &service.BlogService{BlogRepo: blogRepo, StakeholderService: stakeholderService, FollowerService: followerService}
 
 	blogHandler := &handler.BlogHandler{
 		BlogService: blogService,

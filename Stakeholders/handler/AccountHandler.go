@@ -207,3 +207,22 @@ func (handler *AccountHandler) ParseToken(writer http.ResponseWriter, req *http.
 	}
 
 }
+
+func (h *AccountHandler) GetUsernameById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	accountId := vars["accountId"]
+
+	username, err := h.AccountService.GetUsernameById(accountId)
+	if err != nil {
+		http.Error(w, "Error fetching account", http.StatusInternalServerError)
+		return
+	}
+	if username == "" {
+		http.Error(w, "Account not found", http.StatusNotFound)
+		return
+	}
+
+	res := map[string]string{"username": username}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}

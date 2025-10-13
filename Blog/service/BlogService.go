@@ -15,6 +15,7 @@ import (
 type BlogService struct {
 	BlogRepo           *repo.BlogRepository
 	StakeholderService *StakeholderService
+	FollowerService    *FollowerService
 }
 
 func (service *BlogService) FindBlogById(ctx context.Context, id string) (*model.Blog, error) {
@@ -40,17 +41,32 @@ func (service *BlogService) Create(ctx context.Context, blog *model.Blog) error 
 	return nil
 }
 
-func (s *BlogService) FindAllBlogs(ctx context.Context) ([]model.Blog, error) {
-	blogs, err := s.BlogRepo.FindAll(ctx)
+func (s *BlogService) FindAllBlogs(ctx context.Context, requesterId string) ([]model.Blog, error) {
+	allBlogs, err := s.BlogRepo.FindAll(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	for i := range blogs {
-		processImageUrl(&blogs[i])
+	var filteredBlogs []model.Blog
+	for i := range allBlogs {
+		if allBlogs[i].UserId == requesterId {
+			processImageUrl(&allBlogs[i])
+			filteredBlogs = append(filteredBlogs, allBlogs[i])
+			continue
+		}
+
+		isFollowing, err := s.FollowerService.IsFollowing(requesterId, allBlogs[i].UserId)
+		if err != nil {
+			continue
+		}
+
+		if isFollowing {
+			processImageUrl(&allBlogs[i])
+			filteredBlogs = append(filteredBlogs, allBlogs[i])
+		}
 	}
 
-	return blogs, nil
+	return filteredBlogs, nil
 }
 
 func (service *BlogService) HandleLike(ctx context.Context, blogId primitive.ObjectID, accountId string) (bool, error) {

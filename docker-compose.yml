@@ -3,7 +3,7 @@ version: "3.7"
 x-logging: &fluent-bit
   driver: "fluentd"
   options:
-    fluentd-address: 172.19.0.6:24224
+    fluentd-address: 172.19.0.8:24224
 
 services:
 
@@ -187,6 +187,39 @@ services:
       POSTGRES_DB: shopping
     volumes:
       - postgres-data-shopping:/var/lib/postgresql/data
+
+  followers:
+    build:
+      context: ./followers
+      dockerfile: Dockerfile
+    image: followers
+    container_name: followers_service
+    restart: always
+    networks:
+      - servers
+      - monitoring
+    ports:
+      - 8083:8083
+    depends_on:
+      - neo4j
+
+
+  neo4j:
+    image: neo4j:5.20
+    container_name: follower_neo4j
+    restart: always
+    networks:
+      - servers
+      - monitoring
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/password123
+    volumes:
+      - ./neo4j/data:/data
+      - ./neo4j/logs:/logs
+      - ./neo4j/plugins:/plugins
 
 volumes:
   postgres-data:

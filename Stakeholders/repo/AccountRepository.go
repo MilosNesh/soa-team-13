@@ -109,6 +109,22 @@ func (repo *AccountRepository) BlockAccount(accountId string) error {
 		Update("blocked", true).Error
 }
 
+func (repo *AccountRepository) GetUsernameById(accountId string) (string, error) {
+	var username string
+	dbResult := repo.DatabaseConnection.Table("accounts").
+		Select("username").
+		Where("id = ?", accountId).
+		Scan(&username)
+
+	if dbResult.Error != nil {
+		return "", dbResult.Error
+	}
+	if username == "" {
+		return "", nil
+	}
+	return username, nil
+}
+
 func (repo *AccountRepository) ParseToken(token string) *dto.Claims {
 	secretKey := []byte("sekret_key_12#4")
 

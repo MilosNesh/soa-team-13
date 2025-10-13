@@ -44,6 +44,10 @@ func (handler *GatewayHandler) HandleAccount(writer http.ResponseWriter, req *ht
 }
 
 func (handler *GatewayHandler) HandleBlog(writer http.ResponseWriter, req *http.Request) {
+	log.Printf("DEBUG Gateway: === INCOMING REQUEST ===")
+	log.Printf("DEBUG Gateway: Method: %s", req.Method)
+	log.Printf("DEBUG Gateway: Path: %s", req.URL.Path)
+	log.Printf("DEBUG Gateway: Authorization: %s", req.Header.Get("Authorization"))
 	log.Printf("DEBUG Gateway: HandleBlog received request for path: %s", req.URL.Path)
 	var tokenData *dto.TokenData = parseToken(req)
 	path := strings.TrimPrefix(req.URL.Path, "/blogs/")
@@ -194,6 +198,35 @@ func (handler *GatewayHandler) HandleStaticFiles(writer http.ResponseWriter, req
 			req.GetBody = func() (closer io.ReadCloser, e error) { return nil, nil }
 		}
 
+	}
+
+	proxy.ServeHTTP(writer, req)
+}
+
+func (handler *GatewayHandler) HandleFollow(writer http.ResponseWriter, req *http.Request) {
+	var token = parseToken(req)
+	path := strings.TrimPrefix(req.URL.Path, "/follow/")
+
+	if token == nil {
+		writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	// role, _, _ := parseToken(token) // ako treba rola za neku provjeru otkomentarisati, takodje username i id
+
+	//Prosljedjivanje zahtjeva
+	targetURL, err := url.Parse("http://followers_service:8083")
+	if err != nil {
+		http.Error(writer, "Invalid target URL", http.StatusInternalServerError)
+		return
+	}
+
+	proxy := httputil.NewSingleHostReverseProxy(targetURL)
+	originalDirector := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		originalDirector(req)
+		req.URL.Path = "/follow/" + path
+		req.Host = "followers_service:8083"
 	}
 
 	proxy.ServeHTTP(writer, req)

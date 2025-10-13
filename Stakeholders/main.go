@@ -121,7 +121,7 @@ func startServer(handler *handler.StakeholdersHandler) {
 	router.HandleFunc("/accounts/{accountId}/block", handler.AccountHandler.Block).Methods("POST")
 	router.HandleFunc("/accounts/{accountId}/details", handler.AccountHandler.GetAccountDetails).Methods("GET")
 	router.HandleFunc("/accounts/parsetoken", handler.AccountHandler.ParseToken).Methods("GET")
-
+	router.HandleFunc("/accounts/{accountId}/username", handler.AccountHandler.GetUsernameById).Methods("GET")
 	router.HandleFunc("/accounts/profiles/{accountId}", handler.ProfileHandler.FindByAccountId).Methods("GET")
 	router.HandleFunc("/accounts/profiles/", handler.ProfileHandler.UpdateProfile).Methods("PUT")
 
